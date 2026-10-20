@@ -1,8 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
+import 'package:pharmace_emp/frontend/provider/app_view_provider.dart';
+import 'package:pharmace_emp/frontend/provider/employee_provider.dart';
+import 'package:pharmace_emp/frontend/screens/auth/login_screen.dart';
 import 'package:pharmace_emp/frontend/screens/auth/sign_up_screen.dart';
+import 'package:pharmace_emp/frontend/widgets/bottom_nav/nave_item.dart';
 import 'package:window_manager/window_manager.dart';
 
+import '../backend/auth/secure_storage_service.dart';
 import 'screens/auth/splash_screen.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
@@ -67,16 +74,17 @@ class _MyAppState extends State<MyApp> {
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         scrollbars: false,
       ),
-
-      home: PharmaceEmpApp(
-        currentThemeMode: _themeMode,
-        onThemeChanged: toggleTheme,
+      home: ProviderScope(
+        child: PharmaceEmpApp(
+          currentThemeMode: _themeMode,
+          onThemeChanged: toggleTheme,
+        ),
       ),
     );
   }
 }
 
-class PharmaceEmpApp extends StatefulWidget {
+class PharmaceEmpApp extends ConsumerStatefulWidget {
   const PharmaceEmpApp({
     super.key,
     required this.currentThemeMode,
@@ -87,328 +95,289 @@ class PharmaceEmpApp extends StatefulWidget {
   final ValueChanged<ThemeMode> onThemeChanged;
 
   @override
-  State<PharmaceEmpApp> createState() => _PharmaceEmpAppState();
+  ConsumerState<PharmaceEmpApp> createState() => _PharmaceEmpAppState();
 }
 
-enum _AppView { splash, dashboard, signup }
-
-class _PharmaceEmpAppState extends State<PharmaceEmpApp> {
-  _AppView _view = _AppView.splash;
+class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
   int _selectedIndex = 0;
+
+  static Future<bool> _isTokenExpired() async {
+    final token = await SecureStorageService.getToken();
+    if (token == null || token.isEmpty) {
+      return true;
+    }
+    try {
+      return JwtDecoder.isExpired(token);
+    } catch (_) {
+      return true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return AnimatedSwitcher(
       duration: const Duration(milliseconds: 300),
-      child: switch (_view) {
-        _AppView.splash => SplashScreen(
-            key: const ValueKey('splash'),
-            onFinished: () {
+      child: switch (ref.watch(appViewProvider)) {
+        AppView.splash => SplashScreen(
+          key: const ValueKey('splash'),
+          onFinished: () async {
+            final isExpired = await _isTokenExpired();
+            if (isExpired) {
               if (!mounted) return;
               setState(() {
-                _view = _AppView.signup;
+                _selectedIndex = 0;
               });
-            },
-          ),
-        _AppView.dashboard => _buildMainScaffold(),
-      _AppView.signup => SignUpScreen(),
+              ref.read(appViewProvider.notifier).state = AppView.login;
+              return;
+            }
+            if (!mounted) return;
+            setState(() {
+              ref.read(appViewProvider.notifier).state = AppView.dashboard;
+            });
+          },
+        ),
+
+        AppView.login => LoginScreen(
+          onCreateAccount: () {},
+          onSignUp: () {
+            ref.read(appViewProvider.notifier).state = AppView.signup;
+          },
+          onLogin: () {
+            setState(() {
+              _selectedIndex = 0;
+            });
+            ref.read(appViewProvider.notifier).state = AppView.dashboard;
+          },
+        ),
+        AppView.signup => SignUpScreen(
+          onSignIn: () {
+            ref.read(appViewProvider.notifier).state = AppView.login;
+          },
+        ),
+        AppView.dashboard => _buildMainScaffold(),
       },
     );
   }
 
+  UserRole _roleFromString(String? role) {
+    switch (role?.trim().toLowerCase()) {
+      case 'manager':
+        return UserRole.manager;
+      case 'pharmacist':
+        return UserRole.pharmacist;
+      case 'cashier':
+        return UserRole.cashier;
+      case 'staff':
+        return UserRole.staff;
+      default:
+        return UserRole.manager; // Change to your preferred fallback.
+    }
+  }
+
   /// Main Scaffold hosting the Bottom Navigation Bar and Fragment Screens
+  // Widget _buildMainScaffold() {
+  //   final bool isDark = Theme.of(context).brightness == Brightness.dark;
+  //   final Color unselectedColor = isDark
+  //       ? AppColors.darkTextSecondary
+  //       : AppColors.lightTextTertiary;
+  //   final List<Widget> fragmentScreens = [
+  //     ManHomeScreen(),
+  //     SalesScreen(),
+  //     ManInventoryScreen(),
+  //     ManTeamScreen(),
+  //     ProfileScreen(),
+  //   ];
+  //
+  //   return Scaffold(
+  //     key: const ValueKey('dashboard'),
+  //     body: IndexedStack(index: _selectedIndex, children: fragmentScreens),
+  //     bottomNavigationBar: SizedBox(
+  //       height: 68,
+  //       child: NavigationBarTheme(
+  //         data: NavigationBarThemeData(
+  //           indicatorColor: Colors.transparent,
+  //           overlayColor: WidgetStateProperty.resolveWith(
+  //             (states) => Colors.transparent,
+  //           ),
+  //           iconTheme: WidgetStateProperty.resolveWith((states) {
+  //             if (states.contains(WidgetState.selected)) {
+  //               return const IconThemeData(color: AppColors.primary, size: 26);
+  //             }
+  //             return IconThemeData(color: unselectedColor, size: 24);
+  //           }),
+  //           labelTextStyle: WidgetStateProperty.resolveWith((states) {
+  //             if (states.contains(WidgetState.selected)) {
+  //               return const TextStyle(
+  //                 color: AppColors.primary,
+  //                 fontSize: 12,
+  //                 fontWeight: FontWeight.w600,
+  //               );
+  //             }
+  //             return TextStyle(
+  //               color: unselectedColor,
+  //               fontSize: 12,
+  //               fontWeight: FontWeight.normal,
+  //             );
+  //           }),
+  //         ),
+  //         child: NavigationBar(
+  //           selectedIndex: _selectedIndex,
+  //           onDestinationSelected: (index) {
+  //             setState(() {
+  //               _selectedIndex = index;
+  //             });
+  //           },
+  //           destinations: const [
+  //             NavigationDestination(
+  //               icon: Icon(Icons.home_outlined),
+  //               selectedIcon: Icon(Icons.home_rounded),
+  //               label: 'Home',
+  //             ),
+  //             NavigationDestination(
+  //               icon: Icon(Icons.point_of_sale_outlined),
+  //               selectedIcon: Icon(Icons.point_of_sale_rounded),
+  //               label: 'Sales',
+  //             ),
+  //             NavigationDestination(
+  //               icon: FaIcon(FontAwesomeIcons.barsStaggered),
+  //               selectedIcon: FaIcon(FontAwesomeIcons.barsStaggered),
+  //               label: 'Inventory',
+  //             ),
+  //             NavigationDestination(
+  //               icon: Icon(Icons.people_alt_outlined),
+  //               selectedIcon: Icon(Icons.people_alt),
+  //               label: 'Employees',
+  //             ),
+  //             NavigationDestination(
+  //               icon: Icon(Icons.person_outline_rounded),
+  //               selectedIcon: Icon(Icons.person_rounded),
+  //               label: 'Profile',
+  //             ),
+  //           ],
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
+
   Widget _buildMainScaffold() {
-    final bool isDark = Theme.of(context).brightness == Brightness.dark;
-    final Color unselectedColor =
-        isDark ? AppColors.darkTextSecondary : AppColors.lightTextTertiary;
+    final employeeState = ref.watch(employeeProvider);
 
-    // ============================================================
-    // PLACE FOR FUTURE FRAGMENT SCREENS
-    // (Replace these placeholder widgets with your actual fragment screen widgets)
-    // ============================================================
-    final List<Widget> fragmentScreens = [
-      // 0: Home Fragment
-      _buildFragmentSlot(
-        title: 'Home Fragment',
-        subtitle: 'Shift Overview & Dashboard',
-        icon: Icons.home_rounded,
-        description:
-            'Future place for Home screen, active shift notices, and quick actions.',
+    return employeeState.when(
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (error, stackTrace) => const Scaffold(
+        body: Center(child: Text('Unable to load employee profile.')),
       ),
+      data: (employee) {
+        if (employee?.body == null) {
+          return const Scaffold(
+            body: Center(child: Text('Employee profile not found.')),
+          );
+        }
 
-      // 1: Sales / Billing Fragment
-      _buildFragmentSlot(
-        title: 'Sales Fragment',
-        subtitle: 'Point of Sale & Billing',
-        icon: Icons.point_of_sale_rounded,
-        description:
-            'Future place for billing counter, cart items, and payment receipts.',
-      ),
+        final role = _roleFromString(employee!.body!.role);
+        final items = navItemsForRole(role,ref,context);
 
-      // 2: Inventory Fragment
-      _buildFragmentSlot(
-        title: 'Inventory Fragment',
-        subtitle: 'Stock & Medicine Lookup',
-        icon: Icons.inventory_2_rounded,
-        description:
-            'Future place for medicine stock levels, batch lookup, and barcode scanner.',
-      ),
+        // Keep the selected index within the available destinations.
+        final selectedIndex = _selectedIndex < items.length
+            ? _selectedIndex
+            : 0;
 
-      // 3: Profile Fragment
-      _buildProfileFragmentSlot(isDark),
-    ];
+        return Scaffold(
+          key: const ValueKey('dashboard'),
 
-    return Scaffold(
-      key: const ValueKey('dashboard'),
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: fragmentScreens,
-      ),
-
-      // ============================================================
-      // BOTTOM NAVIGATION BAR
-      // ============================================================
-      bottomNavigationBar: SizedBox(
-        height: 68,
-        child: NavigationBarTheme(
-          data: NavigationBarThemeData(
-            indicatorColor: Colors.transparent,
-            overlayColor: WidgetStateProperty.resolveWith(
-              (states) => Colors.transparent,
-            ),
-            iconTheme: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return const IconThemeData(
-                  color: AppColors.primary,
-                  size: 26,
-                );
-              }
-              return IconThemeData(color: unselectedColor, size: 24);
-            }),
-            labelTextStyle: WidgetStateProperty.resolveWith((states) {
-              if (states.contains(WidgetState.selected)) {
-                return const TextStyle(
-                  color: AppColors.primary,
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                );
-              }
-              return TextStyle(
-                color: unselectedColor,
-                fontSize: 12,
-                fontWeight: FontWeight.normal,
-              );
-            }),
+          // Keep destination screens alive while switching tabs.
+          body: IndexedStack(
+            index: selectedIndex,
+            children: items.map((item) => item.screen).toList(),
           ),
-          child: NavigationBar(
-            selectedIndex: _selectedIndex,
-            onDestinationSelected: (index) {
-              setState(() {
-                _selectedIndex = index;
-              });
-            },
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.home_outlined),
-                selectedIcon: Icon(Icons.home_rounded),
-                label: 'Home',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.point_of_sale_outlined),
-                selectedIcon: Icon(Icons.point_of_sale_rounded),
-                label: 'Sales',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.inventory_2_outlined),
-                selectedIcon: Icon(Icons.inventory_2_rounded),
-                label: 'Inventory',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline_rounded),
-                selectedIcon: Icon(Icons.person_rounded),
-                label: 'Profile',
-              ),
-            ],
-          ),
-        ),
-      ),
+
+          bottomNavigationBar: _buildCustomBottomNav(items, selectedIndex),
+        );
+      },
     );
   }
 
-  /// Template placeholder for future fragment screen integration
-  Widget _buildFragmentSlot({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required String description,
-  }) {
+  Widget _buildCustomBottomNav(List<NavItem> items, int selectedIndex) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textTheme = Theme.of(context).textTheme;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 76,
-                    height: 76,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    child: Icon(icon, size: 38, color: AppColors.primary),
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    title,
-                    style: textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: textTheme.bodySmall?.copyWith(
-                      color: AppColors.primaryLight,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    description,
-                    style: textTheme.bodyMedium?.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
+    final unselectedColor = isDark
+        ? AppColors.darkTextSecondary
+        : AppColors.lightTextTertiary;
+
+    return SafeArea(
+      top: false,
+      minimum: const EdgeInsets.fromLTRB(12, 0, 12, 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 6),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: isDark ? 0.20 : 0.08),
+              blurRadius: 18,
+              offset: const Offset(0, -2),
             ),
-          ),
+          ],
         ),
-      ),
-    );
-  }
+        child: Row(
+          children: List.generate(items.length, (index) {
+            final item = items[index];
+            final isSelected = index == selectedIndex;
 
-  /// Profile Fragment slot with Theme Mode switcher for easy dark/light mode testing
-  Widget _buildProfileFragmentSlot(bool isDark) {
-    final textTheme = Theme.of(context).textTheme;
+            final itemColor = isSelected ? AppColors.primary : unselectedColor;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Profile & Settings'),
-      ),
-      body: SafeArea(
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: Padding(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 36,
-                    backgroundColor: AppColors.primary,
-                    child: const Icon(
-                      Icons.person,
-                      color: Colors.white,
-                      size: 40,
-                    ),
+            return Expanded(
+              child: InkWell(
+                borderRadius: BorderRadius.circular(16),
+                onTap: () {
+                  setState(() {
+                    _selectedIndex = index;
+                  });
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 220),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.symmetric(
+                    vertical: 8,
+                    horizontal: 2,
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Employee Profile',
-                    style: textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? AppColors.primary.withValues(alpha: 0.12)
+                        : Colors.transparent,
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Place for future employee profile & account settings',
-                    style: textTheme.bodySmall?.copyWith(
-                      color: isDark
-                          ? AppColors.darkTextSecondary
-                          : AppColors.lightTextSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-
-                  // Theme Selector card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: isDark
-                          ? AppColors.darkSurface
-                          : AppColors.lightSurface,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: isDark
-                            ? AppColors.darkBorder
-                            : AppColors.lightBorder,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconTheme(
+                        data: IconThemeData(color: itemColor, size: 24),
+                        child: isSelected
+                            ? (item.selectedIcon ?? item.icon)
+                            : item.icon,
                       ),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(
-                              Icons.palette_outlined,
-                              color: AppColors.primary,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Theme Preference',
-                              style: textTheme.titleSmall?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
+                      const SizedBox(height: 4),
+                      Text(
+                        item.label,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          color: itemColor,
+                          fontSize: 10.5,
+                          fontWeight: isSelected
+                              ? FontWeight.w600
+                              : FontWeight.w500,
                         ),
-                        const SizedBox(height: 12),
-                        SegmentedButton<ThemeMode>(
-                          segments: const [
-                            ButtonSegment(
-                              value: ThemeMode.light,
-                              label: Text('Light'),
-                              icon: Icon(Icons.light_mode_outlined),
-                            ),
-                            ButtonSegment(
-                              value: ThemeMode.system,
-                              label: Text('System'),
-                              icon: Icon(Icons.brightness_auto_outlined),
-                            ),
-                            ButtonSegment(
-                              value: ThemeMode.dark,
-                              label: Text('Dark'),
-                              icon: Icon(Icons.dark_mode_outlined),
-                            ),
-                          ],
-                          selected: {widget.currentThemeMode},
-                          onSelectionChanged: (newSelection) {
-                            widget.onThemeChanged(newSelection.first);
-                          },
-                        ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
+                ),
               ),
-            ),
-          ),
+            );
+          }),
         ),
       ),
     );

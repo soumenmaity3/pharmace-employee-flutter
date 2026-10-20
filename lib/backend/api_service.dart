@@ -5,6 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:pharmace_emp/backend/api_response.dart';
 
 import 'model/emp_model_invite_id.dart';
+import 'model/emp_return_model.dart';
 
 class ApiService {
   static const String _host = 'pharmace.servehttp.com';
@@ -109,7 +110,7 @@ class ApiService {
     required String name,
     required String password,
     String? phone,
-    required String shopId
+    required String shopId,
   }) async {
     try {
       final response = await http
@@ -147,6 +148,44 @@ class ApiService {
       return ApiResponse(
         statusCode: response.statusCode,
         data: data,
+        message: message,
+      );
+    } catch (e) {
+      return ApiResponse(statusCode: 500, data: null, message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<EmpReturnModel>> empLogin({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await http
+          .post(
+            Uri.parse('$baseUrl/empe/sign-in'),
+            headers: {'Content-Type': 'application/json'},
+            body: jsonEncode({'email': email, 'password': password}),
+          )
+          .timeout(Duration(seconds: 15));
+      EmpReturnModel? empReturnModel;
+      String? message;
+      if (response.body.trim().isNotEmpty) {
+        try {
+          final decode = jsonDecode(response.body);
+          if (decode is Map<String, dynamic>) {
+            empReturnModel = EmpReturnModel.fromJson(decode);
+            message =
+                decode['message']?.toString() ??
+                decode['details']?.toString() ??
+                decode['error']?.toString();
+          } else {
+            message = decode.toString();
+          }
+        } catch (_) {}
+      }
+      return ApiResponse(
+        statusCode: response.statusCode,
+        data: empReturnModel,
         message: message,
       );
     } catch (e) {

@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../theme/app_colors.dart';
 
-/// A short branded launch screen that hands control to the app flow.
 class SplashScreen extends StatefulWidget {
   const SplashScreen({
     super.key,

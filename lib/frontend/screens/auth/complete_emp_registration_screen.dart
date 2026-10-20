@@ -1,22 +1,23 @@
 import 'package:flutter/material.dart';
 import 'package:pharmace_emp/backend/api_service.dart';
 import 'package:pharmace_emp/backend/model/emp_model_invite_id.dart';
+import 'package:pharmace_emp/frontend/screens/auth/login_screen.dart';
 import 'package:pharmace_emp/frontend/theme/app_colors.dart';
 import 'package:pharmace_emp/frontend/theme/app_theme_extension.dart';
 
-class CompleteProfileScreen extends StatefulWidget {
-  const CompleteProfileScreen({
-    super.key,
-    required this.empData,
-  });
+class CompleteEmpRegistrationScreen extends StatefulWidget {
+  const CompleteEmpRegistrationScreen({super.key, required this.empData, required this.onLogin});
 
   final EmpModelInviteId empData;
+  final VoidCallback onLogin;
 
   @override
-  State<CompleteProfileScreen> createState() => _CompleteProfileScreenState();
+  State<CompleteEmpRegistrationScreen> createState() =>
+      _CompleteEmpRegistrationScreenState();
 }
 
-class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
+class _CompleteEmpRegistrationScreenState
+    extends State<CompleteEmpRegistrationScreen> {
   final _formKey = GlobalKey<FormState>();
 
   late final TextEditingController _nameController;
@@ -114,7 +115,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         phone: _phoneController.text.trim().isNotEmpty
             ? _phoneController.text.trim()
             : null,
-        shopId: widget.empData.shopId
+        shopId: widget.empData.shopId,
       );
 
       if (!mounted) return;
@@ -123,8 +124,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         _showSuccessDialog();
       } else {
         setState(() {
-          _errorMessage = response.message ??
-              'Registration failed. Please try again.';
+          _errorMessage =
+              response.message ?? 'Registration failed. Please try again.';
         });
       }
     } catch (e) {
@@ -164,19 +165,13 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             const SizedBox(height: 18),
             const Text(
               'Account Created!',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 10),
             Text(
               'Your profile for ${widget.empData.shopName ?? "pharmacy"} is ready. You can now log in to begin your shift.',
               textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey[600]),
             ),
             const SizedBox(height: 24),
             SizedBox(
@@ -185,7 +180,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               child: ElevatedButton(
                 onPressed: () {
                   Navigator.of(ctx).pop();
-                  Navigator.of(context).pop(); // Back to sign up / login
+                  widget.onLogin();// Back to sign up / login
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
@@ -260,8 +255,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                       Container(
                         padding: const EdgeInsets.all(12),
                         decoration: BoxDecoration(
-                          color: (colors?.danger ?? AppColors.error)
-                              .withValues(alpha: 0.1),
+                          color: (colors?.danger ?? AppColors.error).withValues(
+                            alpha: 0.1,
+                          ),
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
                             color: colors?.danger ?? AppColors.error,
@@ -322,22 +318,26 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                           child: TextFormField(
                             controller: _emailController,
                             readOnly: true,
-                            decoration: _inputDecoration(
-                              hintText: 'Email address',
-                              prefixIcon: Icons.email_outlined,
-                              suffixIcon: _isEmailVerified
-                                  ? const Icon(
-                                      Icons.check_circle_rounded,
-                                      color: AppColors.success,
-                                      size: 20,
-                                    )
-                                  : null,
-                              isDark: isDark,
-                            ).copyWith(
-                              fillColor: isDark
-                                  ? AppColors.darkSurfaceVariant.withValues(alpha: 0.5)
-                                  : AppColors.lightSurfaceVariant.withValues(alpha: 0.7),
-                            ),
+                            decoration:
+                                _inputDecoration(
+                                  hintText: 'Email address',
+                                  prefixIcon: Icons.email_outlined,
+                                  suffixIcon: _isEmailVerified
+                                      ? const Icon(
+                                          Icons.check_circle_rounded,
+                                          color: AppColors.success,
+                                          size: 20,
+                                        )
+                                      : null,
+                                  isDark: isDark,
+                                ).copyWith(
+                                  fillColor: isDark
+                                      ? AppColors.darkSurfaceVariant.withValues(
+                                          alpha: 0.5,
+                                        )
+                                      : AppColors.lightSurfaceVariant
+                                            .withValues(alpha: 0.7),
+                                ),
                           ),
                         ),
                         const SizedBox(width: 10),
@@ -488,7 +488,9 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                     SizedBox(
                       height: 50,
                       child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleCompleteRegistration,
+                        onPressed: _isLoading
+                            ? null
+                            : _handleCompleteRegistration,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
                           foregroundColor: Colors.white,
@@ -504,7 +506,8 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                                 child: CircularProgressIndicator(
                                   strokeWidth: 2.2,
                                   valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white),
+                                    Colors.white,
+                                  ),
                                 ),
                               )
                             : const Text(
@@ -674,18 +677,12 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
         children: [
           Text(
             text,
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-            ),
+            style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
           ),
           if (isRequired)
             const Text(
               ' *',
-              style: TextStyle(
-                color: Colors.red,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
         ],
       ),
@@ -718,16 +715,11 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: AppColors.primary,
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: AppColors.primary, width: 1.5),
       ),
       errorBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(
-          color: AppColors.error,
-        ),
+        borderSide: const BorderSide(color: AppColors.error),
       ),
     );
   }
@@ -742,9 +734,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
               ? AppColors.successDarkContainer
               : AppColors.successLight,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: AppColors.success.withValues(alpha: 0.4),
-          ),
+          border: Border.all(color: AppColors.success.withValues(alpha: 0.4)),
         ),
         child: const Row(
           mainAxisSize: MainAxisSize.min,
@@ -813,9 +803,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
             ? AppColors.darkSurfaceVariant
             : AppColors.lightSurfaceVariant,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: AppColors.primary.withValues(alpha: 0.35),
-        ),
+        border: Border.all(color: AppColors.primary.withValues(alpha: 0.35)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -867,17 +855,18 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   controller: _otpController,
                   keyboardType: TextInputType.number,
                   maxLength: 6,
-                  decoration: _inputDecoration(
-                    hintText: 'Enter code (e.g. 1234)',
-                    prefixIcon: Icons.pin_outlined,
-                    isDark: isDark,
-                  ).copyWith(
-                    counterText: '',
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 12,
-                    ),
-                  ),
+                  decoration:
+                      _inputDecoration(
+                        hintText: 'Enter code (e.g. 1234)',
+                        prefixIcon: Icons.pin_outlined,
+                        isDark: isDark,
+                      ).copyWith(
+                        counterText: '',
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 12,
+                        ),
+                      ),
                 ),
               ),
               const SizedBox(width: 10),
@@ -897,10 +886,7 @@ class _CompleteProfileScreenState extends State<CompleteProfileScreen> {
                   ),
                   child: const Text(
                     'Confirm',
-                    style: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
                   ),
                 ),
               ),

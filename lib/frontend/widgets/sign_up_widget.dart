@@ -3,10 +3,13 @@ import 'dart:io';
 import 'package:dotted_border/dotted_border.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pharmace_emp/frontend/screens/auth/login_screen.dart';
 
 import '../screens/auth/qr_scanner_screen.dart';
 import '../theme/app_colors.dart';
 import '../theme/app_theme_extension.dart';
+import 'text_feild_widget.dart';
 
 class SignUpWidget extends StatefulWidget {
   const SignUpWidget({
@@ -14,20 +17,19 @@ class SignUpWidget extends StatefulWidget {
     this.controller,
     this.onVerify,
     this.onScanQr,
-    this.demoCode = 'PHM-4821',
     this.isLoading = false,
     this.errorMessage,
+    required this.onSignIn,
   });
 
   final TextEditingController? controller;
   final ValueChanged<String>? onVerify;
-
-  // Changed from VoidCallback to ValueChanged<String>
   final ValueChanged<String>? onScanQr;
-
-  final String demoCode;
   final bool isLoading;
   final String? errorMessage;
+
+  // final VoidCallback onSignup;
+  final VoidCallback onSignIn;
 
   @override
   State<SignUpWidget> createState() => _SignUpWidgetState();
@@ -42,21 +44,17 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   @override
   void initState() {
     super.initState();
-
     _internalController = TextEditingController();
-
     _effectiveController.addListener(_onTextChanged);
   }
 
   @override
   void didUpdateWidget(covariant SignUpWidget oldWidget) {
     super.didUpdateWidget(oldWidget);
-
     if (oldWidget.controller != widget.controller) {
       (oldWidget.controller ?? _internalController).removeListener(
         _onTextChanged,
       );
-
       _effectiveController.addListener(_onTextChanged);
     }
   }
@@ -65,7 +63,6 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   void dispose() {
     _effectiveController.removeListener(_onTextChanged);
     _internalController.dispose();
-
     super.dispose();
   }
 
@@ -74,65 +71,78 @@ class _SignUpWidgetState extends State<SignUpWidget> {
   }
 
   Future<void> _openQrScanner() async {
-    // Check platform safely across Web and native desktop
     if (kIsWeb || (!Platform.isAndroid && !Platform.isIOS)) {
       if (!mounted) return;
-
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('QR scanning is not available on desktop or web devices.'),
+        SnackBar(
+          content: const Text(
+            'QR scanner is available on mobile devices only.',
+          ),
+          backgroundColor: AppColors.primaryDark,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
         ),
       );
       return;
     }
 
-    // Open modern animated scanner
     final result = await Navigator.push<String>(
       context,
-      MaterialPageRoute(
-        builder: (context) => const QrScannerScreen(),
-      ),
+      MaterialPageRoute(builder: (context) => const QrScannerScreen()),
     );
 
     if (!mounted) return;
 
-    // If a QR code was scanned
-    if (result != null && result.isNotEmpty) {
-      // Put scanned value into text field
-      _effectiveController.text = result;
-
+    if (result != null && result.trim().isNotEmpty) {
+      final cleanResult = result.trim();
+      _effectiveController.text = cleanResult;
       _effectiveController.selection = TextSelection.fromPosition(
-        TextPosition(offset: result.length),
+        TextPosition(offset: cleanResult.length),
       );
+      widget.onScanQr?.call(cleanResult);
+    }
+  }
 
-      // Notify parent
-      widget.onScanQr?.call(result);
+  void _handleVerify() {
+    final code = _effectiveController.text.trim();
+    if (code.isNotEmpty && !widget.isLoading) {
+      widget.onVerify?.call(code);
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
     final colors = theme.extension<AppThemeExtension>();
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final hasInput = _effectiveController.text.isNotEmpty;
-    final textSecondary = isDark
-        ? AppColors.darkTextSecondary
-        : AppColors.lightTextSecondary;
+    final textPrimary =
+        colors?.textPrimary ??
+        (isDark ? AppColors.darkTextPrimary : AppColors.lightTextPrimary);
+    final textSecondary =
+        colors?.textSecondary ??
+        (isDark ? AppColors.darkTextSecondary : AppColors.lightTextSecondary);
+    final textTertiary =
+        colors?.textTertiary ??
+        (isDark ? AppColors.darkTextTertiary : AppColors.lightTextTertiary);
+    final borderColor =
+        colors?.border ??
+        (isDark ? AppColors.darkBorder : AppColors.lightBorder);
+    final dangerColor = colors?.danger ?? AppColors.error;
+
+    final hasInput = _effectiveController.text.trim().isNotEmpty;
 
     return Container(
       decoration: BoxDecoration(
         color: theme.cardColor,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
-          width: 1,
-        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: borderColor, width: 1),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 18,
+            color: Colors.black.withValues(alpha: isDark ? 0.2 : 0.04),
+            blurRadius: 16,
             offset: const Offset(0, 4),
           ),
         ],
@@ -142,60 +152,64 @@ class _SignUpWidgetState extends State<SignUpWidget> {
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          // Header
+          Text(
+            'Join Team',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w700,
+              fontSize: 20,
+              color: textPrimary,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Scan QR code or enter your staff invite code.',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: textSecondary,
+              fontSize: 13,
+            ),
+          ),
+
+          const SizedBox(height: 18),
+
+          // QR Scanner Card
           InkWell(
-            onTap: _openQrScanner,
-            borderRadius: BorderRadius.circular(16),
+            onTap: widget.isLoading ? null : _openQrScanner,
+            borderRadius: BorderRadius.circular(14),
             child: DottedBorder(
               options: RoundedRectDottedBorderOptions(
-                color: AppColors.primaryDark.withValues(alpha: 0.75),
+                color: AppColors.primary.withValues(alpha: isDark ? 0.5 : 0.6),
                 strokeWidth: 1.2,
                 dashPattern: const [6, 4],
-                radius: const Radius.circular(16),
+                radius: const Radius.circular(14),
               ),
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.symmetric(
-                  vertical: 24,
+                  vertical: 18,
                   horizontal: 16,
                 ),
                 decoration: BoxDecoration(
-                  color: theme.cardColor,
-                  borderRadius: BorderRadius.circular(16),
+                  color: isDark
+                      ? AppColors.darkSurfaceVariant.withValues(alpha: 0.3)
+                      : AppColors.primaryContainer.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(14),
                 ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.qr_code_2_rounded,
-                      size: 42,
-                      color: isDark
-                          ? AppColors.darkTextPrimary
-                          : AppColors.lightTextPrimary,
+                    const Icon(
+                      Icons.qr_code_scanner_rounded,
+                      size: 26,
+                      color: AppColors.primary,
                     ),
-
-                    const SizedBox(height: 12),
-
+                    const SizedBox(width: 10),
                     Text(
-                      'Scan QR code',
+                      'Scan Invite QR',
                       style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 16,
-                        color: isDark
-                            ? AppColors.darkTextPrimary
-                            : AppColors.lightTextPrimary,
-                      ),
-                    ),
-
-                    const SizedBox(height: 6),
-
-                    Text(
-                      'Point your camera at the invitation',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: isDark
-                            ? AppColors.darkTextSecondary
-                            : AppColors.lightTextSecondary,
-                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 15,
+                        color: textPrimary,
                       ),
                     ),
                   ],
@@ -203,109 +217,84 @@ class _SignUpWidgetState extends State<SignUpWidget> {
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18),
-            child: Center(
-              child: Text(
-                'or enter code',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w400,
-                ),
-              ),
-            ),
-          ),
-          TextFormField(
-            controller: _effectiveController,
-            textCapitalization: TextCapitalization.characters,
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: isDark
-                  ? AppColors.darkTextPrimary
-                  : AppColors.lightTextPrimary,
-              fontWeight: FontWeight.w500,
-              fontSize: 15,
-            ),
-            decoration: InputDecoration(
-              hintText: 'e.g. PHM-4821',
-              hintStyle: theme.textTheme.bodyLarge?.copyWith(
-                color: isDark
-                    ? AppColors.darkTextTertiary
-                    : AppColors.lightTextTertiary,
-                fontWeight: FontWeight.w400,
-                fontSize: 15,
-              ),
-              filled: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 16,
-                vertical: 14,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: isDark
-                      ? AppColors.darkBorder
-                      : AppColors.lightBorder.withValues(alpha: 0.8),
-                ),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: BorderSide(
-                  color: isDark
-                      ? AppColors.darkBorder
-                      : AppColors.lightBorder.withValues(alpha: 0.8),
-                ),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(
-                  color: AppColors.primary,
-                  width: 1.5,
-                ),
-              ),
-            ),
-          ),
-          if (widget.errorMessage != null) ...[
-            const SizedBox(height: 6),
 
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Text(
-                widget.errorMessage!,
-                style: TextStyle(
-                  color: colors?.danger ?? AppColors.error,
-                  fontSize: 12,
+          // Simple Divider
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            child: Row(
+              children: [
+                Expanded(child: Divider(color: borderColor, thickness: 1)),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    'or',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: textTertiary,
+                      fontSize: 12,
+                    ),
+                  ),
                 ),
+                Expanded(child: Divider(color: borderColor, thickness: 1)),
+              ],
+            ),
+          ),
+
+          // Code Input
+          TextFieldWidget(
+            controller: _effectiveController,
+            labelText: 'Invite Code',
+            hintText: 'e.g. PHM-4821',
+            isRequired: true,
+            prefixIcon: Icons.pin_outlined,
+            textCapitalization: TextCapitalization.characters,
+            textInputAction: TextInputAction.done,
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp(r'[a-zA-Z0-9\-]')),
+            ],
+            suffixIcon: hasInput
+                ? IconButton(
+                    icon: Icon(
+                      Icons.clear_rounded,
+                      size: 18,
+                      color: textTertiary,
+                    ),
+                    onPressed: () => _effectiveController.clear(),
+                  )
+                : null,
+            onFieldSubmitted: (_) => _handleVerify(),
+          ),
+
+          // Error Message
+          if (widget.errorMessage != null &&
+              widget.errorMessage!.trim().isNotEmpty) ...[
+            const SizedBox(height: 10),
+            Text(
+              widget.errorMessage!,
+              style: TextStyle(
+                color: dangerColor,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w500,
               ),
             ),
           ],
 
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
+
+          // Verify Button
           SizedBox(
             height: 48,
             child: ElevatedButton(
-              onPressed: (hasInput && !widget.isLoading)
-                  ? () {
-                      widget.onVerify?.call(_effectiveController.text.trim());
-                    }
-                  : null,
+              onPressed: (hasInput && !widget.isLoading) ? _handleVerify : null,
               style: ElevatedButton.styleFrom(
-                backgroundColor: hasInput
-                    ? AppColors.primary
-                    : const Color(0xFF7FA99B),
-
-                disabledBackgroundColor: const Color(0xFF7FA99B),
-
-                foregroundColor: hasInput
-                    ? AppColors.white
-                    : const Color(0xFFAEC4BC),
-
-                disabledForegroundColor: const Color(0xFFAEC4BC),
-
+                backgroundColor: AppColors.primary,
+                foregroundColor: AppColors.white,
+                disabledBackgroundColor: isDark
+                    ? AppColors.darkSurfaceVariant
+                    : const Color(0xFFD4E2DC),
+                disabledForegroundColor: isDark
+                    ? AppColors.darkTextTertiary
+                    : const Color(0xFF88A096),
                 elevation: 0,
-
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
@@ -320,7 +309,7 @@ class _SignUpWidgetState extends State<SignUpWidget> {
                       ),
                     )
                   : const Text(
-                      'Verify code',
+                      'Verify Code',
                       style: TextStyle(
                         fontSize: 15,
                         fontWeight: FontWeight.w600,
@@ -329,19 +318,30 @@ class _SignUpWidgetState extends State<SignUpWidget> {
             ),
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: 14),
+
+          // Direct Link to Login
           Center(
-            child: InkWell(
-              borderRadius: BorderRadius.circular(6),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                child: Text(
-                  'Demo code: ${widget.demoCode}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: textSecondary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w400,
-                  ),
+            child: TextButton(
+              onPressed: () {
+                widget.onSignIn();
+              },
+              child: RichText(
+                text: TextSpan(
+                  style: theme.textTheme.bodyMedium?.copyWith(fontSize: 13),
+                  children: [
+                    TextSpan(
+                      text: 'Already have an account? ',
+                      style: TextStyle(color: textSecondary),
+                    ),
+                    const TextSpan(
+                      text: 'Log In',
+                      style: TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
