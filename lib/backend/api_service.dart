@@ -1,17 +1,17 @@
 import 'dart:convert';
-import 'dart:io';
 
 import 'package:http/http.dart' as http;
 import 'package:pharmace_emp/backend/api_response.dart';
+import 'package:pharmace_emp/backend/auth/secure_storage_service.dart';
 
 import 'model/emp_model_invite_id.dart';
 import 'model/emp_return_model.dart';
+import 'model/medicine_output_model.dart';
 
 class ApiService {
-  static const String _host = 'pharmace.servehttp.com';
-
-  static String get baseUrl =>
-      'http://${Platform.isAndroid ? _host : 'localhost'}:8080/v1';
+  // static String get baseUrl =>
+  //     'http://${defaultTargetPlatform == TargetPlatform.android ? '10.206.168.150' : 'localhost'}:8080/v1';
+  static String get baseUrl => 'https://pharmace-backend.onrender.com/v1';
 
   Future<ApiResponse<EmpModelInviteId>> getEmpDataByInviteCode({
     required String inviteCode,
@@ -186,6 +186,142 @@ class ApiService {
       return ApiResponse(
         statusCode: response.statusCode,
         data: empReturnModel,
+        message: message,
+      );
+    } catch (e) {
+      return ApiResponse(statusCode: 500, data: null, message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<List<MedicineOutputModel>>> getInventory({
+    required String shopId,
+    int page = 0,
+    int size = 20,
+  }) async {
+    try {
+      final token = await SecureStorageService.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse(
+          statusCode: 401,
+          data: null,
+          message: 'Token is not valid',
+        );
+      }
+
+      final response = await http
+          .get(
+            Uri.parse(
+              '$baseUrl/inv/get-inv/$shopId'
+              '?page=$page'
+              '&size=$size',
+            ),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      List<MedicineOutputModel>? medicines;
+      String? message;
+
+      if (response.body.trim().isNotEmpty) {
+        try {
+          final decoded = jsonDecode(response.body);
+
+          if (decoded is List) {
+            medicines = MedicineOutputModel.fromJsonList(decoded);
+          } else if (decoded is Map<String, dynamic>) {
+            message =
+                decoded['message']?.toString() ??
+                decoded['error']?.toString() ??
+                decoded['detail']?.toString();
+
+            final rawList =
+                decoded['content'] ??
+                decoded['data'] ??
+                decoded['items'] ??
+                decoded['medicines'];
+
+            if (rawList is List) {
+              medicines = MedicineOutputModel.fromJsonList(rawList);
+            }
+          } else {
+            message = decoded.toString();
+          }
+        } on FormatException {
+          message = response.body.trim();
+        }
+      }
+
+      final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
+
+      return ApiResponse<List<MedicineOutputModel>>(
+        statusCode: response.statusCode,
+        data: isSuccess ? (medicines ?? []) : null,
+        message: message ?? (isSuccess ? null : 'Failed to load inventory'),
+      );
+    } on FormatException catch (e) {
+      return ApiResponse(statusCode: 502, data: null, message: e.toString());
+    } catch (e) {
+      return ApiResponse(statusCode: 500, data: null, message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<List<EmpBody>>> getAllEmployee({
+    required String shopId,
+  }) async {
+    try {
+      final token = await SecureStorageService.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse(
+          statusCode: 401,
+          data: null,
+          message: 'Token is not valid',
+        );
+      }
+      final response = await http
+          .get(
+            Uri.parse('$baseUrl/empe/get-all/$shopId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(Duration(seconds: 15));
+      List<EmpBody>? allEmployee;
+      String? message;
+      if (response.body.trim().isNotEmpty) {
+        try {
+          final decode = jsonDecode(response.body);
+          if (decode is List) {
+            allEmployee = EmpBody.fromJsonList(decode);
+          } else if (decode is Map<String, dynamic>) {
+            message =
+                decode['message']?.toString() ??
+                decode['error']?.toString() ??
+                decode['detail']?.toString();
+
+            final rawList =
+                decode['content'] ??
+                decode['data'] ??
+                decode['items'] ??
+                decode['employee'];
+            if (rawList is List) {
+              allEmployee = EmpBody.fromJsonList(rawList);
+            }
+          } else {
+            message = decode.toString();
+          }
+        } on FormatException {
+          message = response.body.trim();
+        }
+      }
+      return ApiResponse<List<EmpBody>>(
+        statusCode: response.statusCode,
+        data: response.statusCode >= 200 && response.statusCode < 300
+            ? allEmployee
+            : null,
         message: message,
       );
     } catch (e) {

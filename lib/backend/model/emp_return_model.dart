@@ -15,21 +15,21 @@ class EmpReturnModel {
 class EmpBody {
   final String id;
   final String name;
-  final String email;
-  final String password;
-  final String role;
-  final bool isFromOwner;
-  final String createdAt;
+  final String? email;
+  final String? password;
+  final String? role;
+  final bool? isFromOwner;
+  final String? createdAt;
   final Shop? shop;
 
   EmpBody({
     required this.id,
     required this.name,
-    required this.email,
-    required this.password,
-    required this.role,
-    required this.isFromOwner,
-    required this.createdAt,
+    this.email,
+    this.password,
+    this.role,
+    this.isFromOwner,
+    this.createdAt,
     this.shop,
   });
 
@@ -44,6 +44,14 @@ class EmpBody {
     shop: json["shop"] == null ? null : Shop.fromJson(json["shop"]),
   );
 
+  static List<EmpBody> fromJsonList(List<dynamic> jsonList) {
+    return jsonList
+        .map(
+          (item) => EmpBody.fromJson(item as Map<String, dynamic>),
+    )
+        .toList();
+  }
+
   Map<String, dynamic> toJson() => {
     "id": id,
     "name": name,
@@ -57,7 +65,7 @@ class EmpBody {
 }
 
 class Shop {
-  final String? id;
+  final String id;
   final String? shopName;
   final String? shopCode;
   final String? shopEmail;
@@ -76,7 +84,7 @@ class Shop {
   final String? createdAt;
 
   Shop({
-    this.id,
+   required this.id,
     this.shopName,
     this.shopCode,
     this.shopEmail,
@@ -96,7 +104,7 @@ class Shop {
   });
 
   factory Shop.fromJson(Map<String, dynamic> json) => Shop(
-    id: json["id"]?.toString(),
+    id: json["id"]!.toString(),
     shopName: json["shopName"]?.toString(),
     shopCode: json["shopCode"]?.toString(),
     shopEmail: json["shopEmail"]?.toString(),

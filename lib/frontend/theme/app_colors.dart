@@ -96,6 +96,25 @@ abstract final class AppColors {
   static const Color staffBackground = Color(0xFFEEF0F2);
   static const Color staffForeground = Color(0xFF5C6470);
 
+  // ===========================================================
+  // HEADER COLORS
+  // ===========================================================
+  static const managerAvatarColor = Color(0xFF30243F);
+  static const managerPurpleBackground = Color(0xFF322442);
+  static const managerPurpleForeground = Color(0xFFC4A0FF);
+  static const managerGreenBackground = Color(0xFF143629);
+  static const managerGreenForeground = Color(0xFF65D6A5);
+
+  static const Color pharmacistBadgeBackground = Color(0xFF143A35);
+  static const Color pharmacistBadgeForeground = Color(0xFF70DCD0);
+
+  static const Color cashierBadgeBackground = Color(0xFF1B3042);
+  static const Color cashierBadgeForeground = Color(0xFF83C5FF);
+
+  static const Color staffBadgeBackground = Color(0xFF292F2D);
+  static const Color staffBadgeForeground = Color(0xFFB9C4C0);
+
+
   // ============================================================
   // OTHER UI COLORS
   // ============================================================

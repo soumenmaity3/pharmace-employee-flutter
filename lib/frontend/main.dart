@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 import 'package:pharmace_emp/frontend/provider/app_view_provider.dart';
+import 'package:pharmace_emp/frontend/provider/database_provider.dart';
 import 'package:pharmace_emp/frontend/provider/employee_provider.dart';
 import 'package:pharmace_emp/frontend/screens/auth/login_screen.dart';
 import 'package:pharmace_emp/frontend/screens/auth/sign_up_screen.dart';
@@ -123,6 +124,7 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
           onFinished: () async {
             final isExpired = await _isTokenExpired();
             if (isExpired) {
+              await ref.read(employeeProvider.notifier).clearEmployee();
               if (!mounted) return;
               setState(() {
                 _selectedIndex = 0;
@@ -130,6 +132,19 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
               ref.read(appViewProvider.notifier).state = AppView.login;
               return;
             }
+
+            final db = ref.read(databaseProvider);
+            final employee = await db.employeeDao.getEmployee();
+            if (employee == null) {
+              await ref.read(employeeProvider.notifier).clearEmployee();
+              if (!mounted) return;
+              setState(() {
+                _selectedIndex = 0;
+              });
+              ref.read(appViewProvider.notifier).state = AppView.login;
+              return;
+            }
+
             if (!mounted) return;
             setState(() {
               ref.read(appViewProvider.notifier).state = AppView.dashboard;
@@ -170,95 +185,9 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
       case 'staff':
         return UserRole.staff;
       default:
-        return UserRole.manager; // Change to your preferred fallback.
+        return UserRole.manager;
     }
   }
-
-  /// Main Scaffold hosting the Bottom Navigation Bar and Fragment Screens
-  // Widget _buildMainScaffold() {
-  //   final bool isDark = Theme.of(context).brightness == Brightness.dark;
-  //   final Color unselectedColor = isDark
-  //       ? AppColors.darkTextSecondary
-  //       : AppColors.lightTextTertiary;
-  //   final List<Widget> fragmentScreens = [
-  //     ManHomeScreen(),
-  //     SalesScreen(),
-  //     ManInventoryScreen(),
-  //     ManTeamScreen(),
-  //     ProfileScreen(),
-  //   ];
-  //
-  //   return Scaffold(
-  //     key: const ValueKey('dashboard'),
-  //     body: IndexedStack(index: _selectedIndex, children: fragmentScreens),
-  //     bottomNavigationBar: SizedBox(
-  //       height: 68,
-  //       child: NavigationBarTheme(
-  //         data: NavigationBarThemeData(
-  //           indicatorColor: Colors.transparent,
-  //           overlayColor: WidgetStateProperty.resolveWith(
-  //             (states) => Colors.transparent,
-  //           ),
-  //           iconTheme: WidgetStateProperty.resolveWith((states) {
-  //             if (states.contains(WidgetState.selected)) {
-  //               return const IconThemeData(color: AppColors.primary, size: 26);
-  //             }
-  //             return IconThemeData(color: unselectedColor, size: 24);
-  //           }),
-  //           labelTextStyle: WidgetStateProperty.resolveWith((states) {
-  //             if (states.contains(WidgetState.selected)) {
-  //               return const TextStyle(
-  //                 color: AppColors.primary,
-  //                 fontSize: 12,
-  //                 fontWeight: FontWeight.w600,
-  //               );
-  //             }
-  //             return TextStyle(
-  //               color: unselectedColor,
-  //               fontSize: 12,
-  //               fontWeight: FontWeight.normal,
-  //             );
-  //           }),
-  //         ),
-  //         child: NavigationBar(
-  //           selectedIndex: _selectedIndex,
-  //           onDestinationSelected: (index) {
-  //             setState(() {
-  //               _selectedIndex = index;
-  //             });
-  //           },
-  //           destinations: const [
-  //             NavigationDestination(
-  //               icon: Icon(Icons.home_outlined),
-  //               selectedIcon: Icon(Icons.home_rounded),
-  //               label: 'Home',
-  //             ),
-  //             NavigationDestination(
-  //               icon: Icon(Icons.point_of_sale_outlined),
-  //               selectedIcon: Icon(Icons.point_of_sale_rounded),
-  //               label: 'Sales',
-  //             ),
-  //             NavigationDestination(
-  //               icon: FaIcon(FontAwesomeIcons.barsStaggered),
-  //               selectedIcon: FaIcon(FontAwesomeIcons.barsStaggered),
-  //               label: 'Inventory',
-  //             ),
-  //             NavigationDestination(
-  //               icon: Icon(Icons.people_alt_outlined),
-  //               selectedIcon: Icon(Icons.people_alt),
-  //               label: 'Employees',
-  //             ),
-  //             NavigationDestination(
-  //               icon: Icon(Icons.person_outline_rounded),
-  //               selectedIcon: Icon(Icons.person_rounded),
-  //               label: 'Profile',
-  //             ),
-  //           ],
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildMainScaffold() {
     final employeeState = ref.watch(employeeProvider);
@@ -266,18 +195,26 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
     return employeeState.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (error, stackTrace) => const Scaffold(
-        body: Center(child: Text('Unable to load employee profile.')),
-      ),
+      error: (error, stackTrace) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(employeeProvider.notifier).clearEmployee();
+          ref.read(appViewProvider.notifier).state = AppView.login;
+        });
+        return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      },
       data: (employee) {
-        if (employee?.body == null) {
+        if (employee == null) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(employeeProvider.notifier).clearEmployee();
+            ref.read(appViewProvider.notifier).state = AppView.login;
+          });
           return const Scaffold(
-            body: Center(child: Text('Employee profile not found.')),
+            body: Center(child: CircularProgressIndicator()),
           );
         }
 
-        final role = _roleFromString(employee!.body!.role);
-        final items = navItemsForRole(role,ref,context);
+        final role = _roleFromString(employee!.role);
+        final items = navItemsForRole(role, ref, context);
 
         // Keep the selected index within the available destinations.
         final selectedIndex = _selectedIndex < items.length

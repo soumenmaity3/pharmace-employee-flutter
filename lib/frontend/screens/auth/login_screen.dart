@@ -8,6 +8,8 @@ import 'package:pharmace_emp/frontend/widgets/text_feild_widget.dart';
 import '../../../backend/auth/secure_storage_service.dart';
 import '../../provider/database_provider.dart';
 import '../../provider/employee_provider.dart';
+import '../../provider/medicine_provider.dart';
+import '../../provider/shop_provider.dart';
 
 class LoginScreen extends ConsumerStatefulWidget {
   const LoginScreen({
@@ -67,9 +69,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         final empReturnModel = response.data!;
         await SecureStorageService.saveToken(empReturnModel.token!);
         final db = ref.read(databaseProvider);
-        await ref.read(employeeProvider.notifier).saveEmployee(empReturnModel);
-        // await db.employeeDao.saveEmployee(empReturnModel);
+        if (empReturnModel.body == null) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text('Employee body is empty...')));
+        } else {
+          await ref
+              .read(employeeProvider.notifier)
+              .saveEmployee(empReturnModel.body!);
+        }
         await db.shopDao.saveShop(empReturnModel);
+
+        ref.invalidate(employeeProvider);
+        ref.invalidate(shopProvider);
+        ref.invalidate(medicineProvider);
+
         widget.onLogin();
       } else {
         setState(() {

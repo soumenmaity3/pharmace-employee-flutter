@@ -5,7 +5,6 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:pharmace_emp/frontend/theme/app_colors.dart';
 
 import '../../provider/app_view_provider.dart';
-import '../../provider/database_provider.dart';
 import '../../provider/employee_provider.dart';
 import '../../screens/fragment/cashier/cashier_billing_screen.dart';
 import '../../screens/fragment/cashier/cashier_drawer_screen.dart';
@@ -44,26 +43,33 @@ class NavItem {
   });
 }
 
-List<NavItem> navItemsForRole(UserRole role, WidgetRef ref,BuildContext context) {
+List<NavItem> navItemsForRole(UserRole role, WidgetRef ref, BuildContext context) {
+  void handleLogout() async {
+    await ref.read(employeeProvider.notifier).clearEmployee();
+    ref.read(appViewProvider.notifier).state = AppView.login;
+  }
+
+  final isDark = Theme.of(context).brightness == Brightness.dark;
+
   Widget buildStockIcon() {
     return SvgPicture.asset(
       'assets/icons/inventory_outline.svg',
       width: 24,
       height: 24,
-      color: AppColors.white,
+      color:isDark? AppColors.white:AppColors.black.withValues(alpha: 0.2),
     );
   }
 
   switch (role) {
     case UserRole.manager:
       return [
-         NavItem(
+        NavItem(
           label: 'Home',
           icon: Icon(Icons.home_outlined),
           selectedIcon: Icon(Icons.home_outlined),
           screen: ManHomeScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'Team',
           icon: Icon(Icons.people_outline),
           selectedIcon: Icon(Icons.people_outline),
@@ -73,9 +79,9 @@ List<NavItem> navItemsForRole(UserRole role, WidgetRef ref,BuildContext context)
           label: 'Stock',
           icon: buildStockIcon(),
           selectedIcon: buildStockIcon(),
-          screen:  ManInventoryScreen(),
+          screen: ManInventoryScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'Reports',
           icon: FaIcon(FontAwesomeIcons.clipboard),
           selectedIcon: FaIcon(FontAwesomeIcons.clipboard),
@@ -83,27 +89,21 @@ List<NavItem> navItemsForRole(UserRole role, WidgetRef ref,BuildContext context)
         ),
         NavItem(
           label: 'More',
-          icon:  Icon(Icons.menu),
-          selectedIcon:  Icon(Icons.menu),
-          screen: ManMoreScreen(onLogout: () {
-            final db= ref.read(databaseProvider);
-            db.employeeDao.deleteAll();
-            db.shopDao.deleteAll();
-            ref.invalidate(employeeProvider);
-            ref.read(appViewProvider.notifier).state = AppView.login;
-          },),
+          icon: Icon(Icons.menu),
+          selectedIcon: Icon(Icons.menu),
+          screen: ManMoreScreen(onLogout: handleLogout),
         ),
       ];
 
     case UserRole.pharmacist:
       return [
-         NavItem(
+        NavItem(
           label: 'Home',
           icon: Icon(Icons.home_outlined),
           selectedIcon: Icon(Icons.home_outlined),
           screen: PhmHomeScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'Scripts',
           icon: Icon(Icons.receipt_long_outlined),
           selectedIcon: Icon(Icons.receipt_long_rounded),
@@ -113,37 +113,37 @@ List<NavItem> navItemsForRole(UserRole role, WidgetRef ref,BuildContext context)
           label: 'Stock',
           icon: buildStockIcon(),
           selectedIcon: buildStockIcon(),
-          screen:  PhmStockScreen(),
+          screen: PhmStockScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'Tasks',
           icon: FaIcon(FontAwesomeIcons.listCheck),
           selectedIcon: FaIcon(FontAwesomeIcons.listCheck),
           screen: PhmTasksScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'More',
           icon: Icon(Icons.menu),
           selectedIcon: Icon(Icons.menu),
-          screen: PhmMoreScreen(),
+          screen: PhmMoreScreen(onLogout: handleLogout),
         ),
       ];
 
     case UserRole.cashier:
       return [
-         NavItem(
+        NavItem(
           label: 'Home',
           icon: Icon(Icons.home_outlined),
           selectedIcon: Icon(Icons.home_outlined),
           screen: CashierHomeScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'Checkout',
           icon: FaIcon(FontAwesomeIcons.shopify),
           selectedIcon: FaIcon(FontAwesomeIcons.shopify),
           screen: CashierBillingScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'Drawer',
           icon: Icon(Icons.account_balance_wallet_outlined),
           selectedIcon: Icon(Icons.account_balance_wallet_outlined),
@@ -153,31 +153,31 @@ List<NavItem> navItemsForRole(UserRole role, WidgetRef ref,BuildContext context)
           label: 'Stock',
           icon: buildStockIcon(),
           selectedIcon: buildStockIcon(),
-          screen:  CashierStockScreen(),
+          screen: CashierStockScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'More',
           icon: Icon(Icons.menu),
           selectedIcon: Icon(Icons.menu),
-          screen: CashierMoreScreen(),
+          screen: CashierMoreScreen(onLogout: handleLogout),
         ),
       ];
 
     case UserRole.staff:
       return [
-         NavItem(
+        NavItem(
           label: 'Home',
           icon: Icon(Icons.home_outlined),
           selectedIcon: Icon(Icons.home_outlined),
           screen: StfHomeScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'Tasks',
           icon: FaIcon(FontAwesomeIcons.listCheck),
           selectedIcon: FaIcon(FontAwesomeIcons.listCheck),
           screen: StfTasksScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'Inward',
           icon: Icon(Icons.move_to_inbox_outlined),
           selectedIcon: Icon(Icons.move_to_inbox_outlined),
@@ -187,13 +187,13 @@ List<NavItem> navItemsForRole(UserRole role, WidgetRef ref,BuildContext context)
           label: 'Stock',
           icon: buildStockIcon(),
           selectedIcon: buildStockIcon(),
-          screen:  StfStockScreen(),
+          screen: StfStockScreen(),
         ),
-         NavItem(
+        NavItem(
           label: 'More',
           icon: Icon(Icons.more_horiz_outlined),
           selectedIcon: Icon(Icons.more_horiz_rounded),
-          screen: StfMoreScreen(),
+          screen: StfMoreScreen(onLogout: handleLogout),
         ),
       ];
   }

@@ -409,6 +409,11 @@ abstract final class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+
+        textStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     ),
 
@@ -424,6 +429,11 @@ abstract final class AppTheme {
 
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
+        ),
+
+        textStyle: const TextStyle(
+          fontSize: 14,
+          fontWeight: FontWeight.w600,
         ),
       ),
     ),

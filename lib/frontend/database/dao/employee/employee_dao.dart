@@ -11,43 +11,39 @@ class EmployeeDao extends DatabaseAccessor<AppDatabase>
     with _$EmployeeDaoMixin {
   EmployeeDao(super.db);
 
-  Future<EmpReturnModel?> getEmployee() async {
+  Future<EmpBody?> getEmployee() async {
     final employee = await select(employeeTable).getSingleOrNull();
     if (employee == null) return null;
-    return EmpReturnModel(
-      body: EmpBody(
-        id: employee.id,
-        name: employee.name,
-        email: employee.email,
-        password: '',
-        role: employee.role,
-        isFromOwner: employee.isFromOwner,
-        createdAt: employee.createdAt,
-      ),
+    return EmpBody(
+      id: employee.id,
+      name: employee.name,
+      email: employee.email,
+      password: '',
+      role: employee.role,
+      isFromOwner: employee.isFromOwner,
+      createdAt: employee.createdAt,
     );
-    // shop: employee.shopId));
   }
 
-  Future<void> saveEmployee(EmpReturnModel employee) async {
-    final emp = employee.body;
-    if (emp == null) return;
+  Future<void> saveEmployee(EmpBody employee) async {
+    final emp = employee;
     await transaction(() async {
       await delete(employeeTable).go();
       await into(employeeTable).insert(
         EmployeeTableCompanion.insert(
           id: emp.id,
           name: emp.name,
-          email: emp.email,
-          isFromOwner: Value(emp.isFromOwner),
-          role: Value(emp.role),
+          email: emp.email!,
+          isFromOwner: Value(emp.isFromOwner!),
+          role: Value(emp.role!),
           shopId: Value(emp.shop?.id),
-          createdAt: emp.createdAt,
+          createdAt: emp.createdAt!,
         ),
       );
     });
   }
 
   Future<void> deleteAll() async {
-    delete(employeeTable).go();
+    await delete(employeeTable).go();
   }
 }
