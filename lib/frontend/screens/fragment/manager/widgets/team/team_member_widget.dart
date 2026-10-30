@@ -30,7 +30,7 @@ class TeamMemberWidget extends StatelessWidget {
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: theme.cardColor,
         borderRadius: BorderRadius.circular(16),
@@ -48,9 +48,7 @@ class TeamMemberWidget extends StatelessWidget {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(name, style: theme.textTheme.titleLarge),
-                  ],
+                  children: [Text(name, style: theme.textTheme.titleLarge)],
                 ),
               ),
               if (!isFromOwner)
@@ -62,11 +60,11 @@ class TeamMemberWidget extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: isOnDuty
                         ? (isDark
-                        ? AppColors.successDarkContainer
-                        : AppColors.successLight)
+                              ? AppColors.successDarkContainer
+                              : AppColors.successLight)
                         : (isDark
-                        ? AppColors.errorDarkContainer
-                        : AppColors.errorLight),
+                              ? AppColors.errorDarkContainer
+                              : AppColors.errorLight),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Row(
@@ -78,11 +76,11 @@ class TeamMemberWidget extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: isOnDuty
                               ? (isDark
-                              ? AppColors.successDark
-                              : AppColors.success)
+                                    ? AppColors.successDark
+                                    : AppColors.success)
                               : (isDark
-                              ? AppColors.errorDark
-                              : AppColors.error),
+                                    ? AppColors.errorDark
+                                    : AppColors.error),
                           shape: BoxShape.circle,
                         ),
                       ),
@@ -92,11 +90,11 @@ class TeamMemberWidget extends StatelessWidget {
                         style: TextStyle(
                           color: isOnDuty
                               ? (isDark
-                              ? AppColors.successDark
-                              : AppColors.success)
+                                    ? AppColors.successDark
+                                    : AppColors.success)
                               : (isDark
-                              ? AppColors.errorDark
-                              : AppColors.error),
+                                    ? AppColors.errorDark
+                                    : AppColors.error),
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -159,17 +157,15 @@ class TeamMemberWidget extends StatelessWidget {
                         color: isFromOwner
                             ? (isDark ? AppColors.goldDark : AppColors.gold)
                             : (isDark
-                            ? AppColors.darkBorder
-                            : AppColors.lightBorder),
+                                  ? AppColors.darkBorder
+                                  : AppColors.lightBorder),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: Text(
-                      isFromOwner
-                          ? 'Owner Account'
-                          : 'Mark inactive',
+                      isFromOwner ? 'Owner Account' : 'Mark inactive',
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -212,9 +208,7 @@ class TeamMemberWidget extends StatelessWidget {
                                 ? AppColors.primaryDark
                                 : AppColors.primary),
                       foregroundColor: isFromOwner
-                          ? (isDark
-                                ? AppColors.warningDark
-                                : AppColors.warning)
+                          ? (isDark ? AppColors.warningDark : AppColors.warning)
                           : AppColors.white,
                       elevation: 0,
                       side: isFromOwner
@@ -243,39 +237,39 @@ class TeamMemberWidget extends StatelessWidget {
     switch (role.toLowerCase()) {
       case 'manager':
         return (
-        isDark
-            ? AppColors.managerPurpleBackground
-            : AppColors.managerBackground,
-        isDark
-            ? AppColors.managerPurpleForeground
-            : AppColors.managerForeground,
-        Icons.shield_outlined,
+          isDark
+              ? AppColors.managerPurpleBackground
+              : AppColors.managerBackground,
+          isDark
+              ? AppColors.managerPurpleForeground
+              : AppColors.managerForeground,
+          Icons.shield_outlined,
         );
       case 'pharmacist':
         return (
-        isDark
-            ? AppColors.pharmacistBadgeBackground
-            : AppColors.pharmacistBackground,
-        isDark
-            ? AppColors.pharmacistBadgeForeground
-            : AppColors.pharmacistForeground,
-        Icons.medical_services_outlined,
+          isDark
+              ? AppColors.pharmacistBadgeBackground
+              : AppColors.pharmacistBackground,
+          isDark
+              ? AppColors.pharmacistBadgeForeground
+              : AppColors.pharmacistForeground,
+          Icons.medical_services_outlined,
         );
       case 'cashier':
         return (
-        isDark
-            ? AppColors.cashierBadgeBackground
-            : AppColors.cashierBackground,
-        isDark
-            ? AppColors.cashierBadgeForeground
-            : AppColors.cashierForeground,
-        Icons.point_of_sale_outlined,
+          isDark
+              ? AppColors.cashierBadgeBackground
+              : AppColors.cashierBackground,
+          isDark
+              ? AppColors.cashierBadgeForeground
+              : AppColors.cashierForeground,
+          Icons.point_of_sale_outlined,
         );
       default:
         return (
-        isDark ? AppColors.staffBadgeBackground : AppColors.staffBackground,
-        isDark ? AppColors.staffBadgeForeground : AppColors.staffForeground,
-        Icons.badge_outlined,
+          isDark ? AppColors.staffBadgeBackground : AppColors.staffBackground,
+          isDark ? AppColors.staffBadgeForeground : AppColors.staffForeground,
+          Icons.badge_outlined,
         );
     }
   }

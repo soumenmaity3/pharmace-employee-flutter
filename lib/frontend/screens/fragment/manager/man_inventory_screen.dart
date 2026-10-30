@@ -135,6 +135,7 @@ class _ManInventoryScreenState extends ConsumerState<ManInventoryScreen> {
     return SafeArea(
       child: Scaffold(
         floatingActionButton: FloatingActionButton(
+          heroTag: 'inventory_fb',
           onPressed: () {},
           child: const Icon(Icons.add, size: 28),
         ),

@@ -259,6 +259,7 @@ class _ManTeamScreenState extends ConsumerState<ManTeamScreen> {
           ),
         ),
         floatingActionButton: FloatingActionButton(
+          heroTag: 'team_fb',
           onPressed: () {},
           child: const Icon(Icons.add, size: 30),
         ),

@@ -20,14 +20,14 @@ class BillingScreen extends ConsumerStatefulWidget {
 }
 
 class _BillingScreenState extends ConsumerState<BillingScreen> {
-
   int _selectedCustomerType = 0;
   final _formKey = GlobalKey<FormState>();
   List<MedicineOutputModel> _searchMedicine = [];
   final List<MedicineBillModel> _selectedMedicine = [];
   String _medicineSearchQuery = '';
   final Map<String, (int strip, int loose, double price)> _medicineQuantities =
-  {};
+      {};
+
   double get totalPrice {
     return _medicineQuantities.values.fold(0.0, (sum, v) => sum + v.$3);
   }
@@ -53,6 +53,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
     final theme = Theme.of(context);
     return SafeArea(
       child: Scaffold(
+        appBar: AppBar(title: Text('Billing Screen')),
         body: Padding(
           padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
@@ -191,24 +192,24 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
                 onQuantityChanged: (stripCount, looseCount, totalPrice) {
                   setState(() {
                     _medicineQuantities[medicine.id] = (
-                    stripCount,
-                    looseCount,
-                    totalPrice,
+                      stripCount,
+                      looseCount,
+                      totalPrice,
                     );
 
                     final index = _selectedMedicine.indexWhere(
-                          (item) => item.id == medicine.id,
+                      (item) => item.id == medicine.id,
                     );
 
                     if (index != -1) {
                       _selectedMedicine[index] = _selectedMedicine[index]
                           .copyWith(
-                        strip: stripCount,
-                        looseQty: looseCount,
-                        totalPrice: double.parse(
-                          totalPrice.toStringAsFixed(2),
-                        ),
-                      );
+                            strip: stripCount,
+                            looseQty: looseCount,
+                            totalPrice: double.parse(
+                              totalPrice.toStringAsFixed(2),
+                            ),
+                          );
                     }
                   });
                 },
@@ -252,7 +253,7 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
             medicineItem: medicine, // ✅ types match
             onAddMedicine: () {
               final alreadyAdded = _selectedMedicine.any(
-                    (item) => item.id == medicine.id,
+                (item) => item.id == medicine.id,
               );
 
               if (alreadyAdded) {
@@ -286,7 +287,6 @@ class _BillingScreenState extends ConsumerState<BillingScreen> {
       ),
     );
   }
-
 
   Widget _customerTypeButton({
     required String title,
