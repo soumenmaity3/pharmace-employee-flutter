@@ -19,6 +19,7 @@ class EmpBody {
   final String? password;
   final String? role;
   final bool? isFromOwner;
+  final bool? activeStatus;
   final String? createdAt;
   final Shop? shop;
 
@@ -29,6 +30,7 @@ class EmpBody {
     this.password,
     this.role,
     this.isFromOwner,
+    this.activeStatus,
     this.createdAt,
     this.shop,
   });
@@ -40,6 +42,7 @@ class EmpBody {
     password: json["password"]!.toString(),
     role: json["role"]!.toString(),
     isFromOwner: json["isFromOwner"],
+    activeStatus: json["activeStatus"],
     createdAt: json["createdAt"]!.toString(),
     shop: json["shop"] == null ? null : Shop.fromJson(json["shop"]),
   );
@@ -59,6 +62,7 @@ class EmpBody {
     "password": password,
     "role": role,
     "isFromOwner": isFromOwner,
+    "activeStatus":activeStatus,
     "createdAt": createdAt,
     "shop": shop?.toJson(),
   };

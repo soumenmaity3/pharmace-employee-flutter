@@ -15,6 +15,9 @@ class EmployeeTable extends Table {
 
   TextColumn get createdAt => text()();
 
+  BoolColumn get activeStatus =>
+      boolean().nullable().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 }

@@ -81,6 +81,21 @@ class $EmployeeTableTable extends EmployeeTable
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _activeStatusMeta = const VerificationMeta(
+    'activeStatus',
+  );
+  @override
+  late final GeneratedColumn<bool> activeStatus = GeneratedColumn<bool>(
+    'active_status',
+    aliasedName,
+    true,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("active_status" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -90,6 +105,7 @@ class $EmployeeTableTable extends EmployeeTable
     isFromOwner,
     shopId,
     createdAt,
+    activeStatus,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -153,6 +169,15 @@ class $EmployeeTableTable extends EmployeeTable
     } else if (isInserting) {
       context.missing(_createdAtMeta);
     }
+    if (data.containsKey('active_status')) {
+      context.handle(
+        _activeStatusMeta,
+        activeStatus.isAcceptableOrUnknown(
+          data['active_status']!,
+          _activeStatusMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -190,6 +215,10 @@ class $EmployeeTableTable extends EmployeeTable
         DriftSqlType.string,
         data['${effectivePrefix}created_at'],
       )!,
+      activeStatus: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}active_status'],
+      ),
     );
   }
 
@@ -208,6 +237,7 @@ class EmployeeTableData extends DataClass
   final bool isFromOwner;
   final String? shopId;
   final String createdAt;
+  final bool? activeStatus;
   const EmployeeTableData({
     required this.id,
     required this.name,
@@ -216,6 +246,7 @@ class EmployeeTableData extends DataClass
     required this.isFromOwner,
     this.shopId,
     required this.createdAt,
+    this.activeStatus,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -229,6 +260,9 @@ class EmployeeTableData extends DataClass
       map['shop_id'] = Variable<String>(shopId);
     }
     map['created_at'] = Variable<String>(createdAt);
+    if (!nullToAbsent || activeStatus != null) {
+      map['active_status'] = Variable<bool>(activeStatus);
+    }
     return map;
   }
 
@@ -243,6 +277,9 @@ class EmployeeTableData extends DataClass
           ? const Value.absent()
           : Value(shopId),
       createdAt: Value(createdAt),
+      activeStatus: activeStatus == null && nullToAbsent
+          ? const Value.absent()
+          : Value(activeStatus),
     );
   }
 
@@ -259,6 +296,7 @@ class EmployeeTableData extends DataClass
       isFromOwner: serializer.fromJson<bool>(json['isFromOwner']),
       shopId: serializer.fromJson<String?>(json['shopId']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
+      activeStatus: serializer.fromJson<bool?>(json['activeStatus']),
     );
   }
   @override
@@ -272,6 +310,7 @@ class EmployeeTableData extends DataClass
       'isFromOwner': serializer.toJson<bool>(isFromOwner),
       'shopId': serializer.toJson<String?>(shopId),
       'createdAt': serializer.toJson<String>(createdAt),
+      'activeStatus': serializer.toJson<bool?>(activeStatus),
     };
   }
 
@@ -283,6 +322,7 @@ class EmployeeTableData extends DataClass
     bool? isFromOwner,
     Value<String?> shopId = const Value.absent(),
     String? createdAt,
+    Value<bool?> activeStatus = const Value.absent(),
   }) => EmployeeTableData(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -291,6 +331,7 @@ class EmployeeTableData extends DataClass
     isFromOwner: isFromOwner ?? this.isFromOwner,
     shopId: shopId.present ? shopId.value : this.shopId,
     createdAt: createdAt ?? this.createdAt,
+    activeStatus: activeStatus.present ? activeStatus.value : this.activeStatus,
   );
   EmployeeTableData copyWithCompanion(EmployeeTableCompanion data) {
     return EmployeeTableData(
@@ -303,6 +344,9 @@ class EmployeeTableData extends DataClass
           : this.isFromOwner,
       shopId: data.shopId.present ? data.shopId.value : this.shopId,
       createdAt: data.createdAt.present ? data.createdAt.value : this.createdAt,
+      activeStatus: data.activeStatus.present
+          ? data.activeStatus.value
+          : this.activeStatus,
     );
   }
 
@@ -315,14 +359,23 @@ class EmployeeTableData extends DataClass
           ..write('role: $role, ')
           ..write('isFromOwner: $isFromOwner, ')
           ..write('shopId: $shopId, ')
-          ..write('createdAt: $createdAt')
+          ..write('createdAt: $createdAt, ')
+          ..write('activeStatus: $activeStatus')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, email, role, isFromOwner, shopId, createdAt);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    email,
+    role,
+    isFromOwner,
+    shopId,
+    createdAt,
+    activeStatus,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -333,7 +386,8 @@ class EmployeeTableData extends DataClass
           other.role == this.role &&
           other.isFromOwner == this.isFromOwner &&
           other.shopId == this.shopId &&
-          other.createdAt == this.createdAt);
+          other.createdAt == this.createdAt &&
+          other.activeStatus == this.activeStatus);
 }
 
 class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
@@ -344,6 +398,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
   final Value<bool> isFromOwner;
   final Value<String?> shopId;
   final Value<String> createdAt;
+  final Value<bool?> activeStatus;
   final Value<int> rowid;
   const EmployeeTableCompanion({
     this.id = const Value.absent(),
@@ -353,6 +408,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     this.isFromOwner = const Value.absent(),
     this.shopId = const Value.absent(),
     this.createdAt = const Value.absent(),
+    this.activeStatus = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   EmployeeTableCompanion.insert({
@@ -363,6 +419,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     this.isFromOwner = const Value.absent(),
     this.shopId = const Value.absent(),
     required String createdAt,
+    this.activeStatus = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -376,6 +433,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     Expression<bool>? isFromOwner,
     Expression<String>? shopId,
     Expression<String>? createdAt,
+    Expression<bool>? activeStatus,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -386,6 +444,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
       if (isFromOwner != null) 'is_from_owner': isFromOwner,
       if (shopId != null) 'shop_id': shopId,
       if (createdAt != null) 'created_at': createdAt,
+      if (activeStatus != null) 'active_status': activeStatus,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -398,6 +457,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     Value<bool>? isFromOwner,
     Value<String?>? shopId,
     Value<String>? createdAt,
+    Value<bool?>? activeStatus,
     Value<int>? rowid,
   }) {
     return EmployeeTableCompanion(
@@ -408,6 +468,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
       isFromOwner: isFromOwner ?? this.isFromOwner,
       shopId: shopId ?? this.shopId,
       createdAt: createdAt ?? this.createdAt,
+      activeStatus: activeStatus ?? this.activeStatus,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -436,6 +497,9 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     if (createdAt.present) {
       map['created_at'] = Variable<String>(createdAt.value);
     }
+    if (activeStatus.present) {
+      map['active_status'] = Variable<bool>(activeStatus.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -452,6 +516,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
           ..write('isFromOwner: $isFromOwner, ')
           ..write('shopId: $shopId, ')
           ..write('createdAt: $createdAt, ')
+          ..write('activeStatus: $activeStatus, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2917,6 +2982,7 @@ typedef $$EmployeeTableTableCreateCompanionBuilder =
       Value<bool> isFromOwner,
       Value<String?> shopId,
       required String createdAt,
+      Value<bool?> activeStatus,
       Value<int> rowid,
     });
 typedef $$EmployeeTableTableUpdateCompanionBuilder =
@@ -2928,6 +2994,7 @@ typedef $$EmployeeTableTableUpdateCompanionBuilder =
       Value<bool> isFromOwner,
       Value<String?> shopId,
       Value<String> createdAt,
+      Value<bool?> activeStatus,
       Value<int> rowid,
     });
 
@@ -2972,6 +3039,11 @@ class $$EmployeeTableTableFilterComposer
 
   ColumnFilters<String> get createdAt => $composableBuilder(
     column: $table.createdAt,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get activeStatus => $composableBuilder(
+    column: $table.activeStatus,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3019,6 +3091,11 @@ class $$EmployeeTableTableOrderingComposer
     column: $table.createdAt,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get activeStatus => $composableBuilder(
+    column: $table.activeStatus,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$EmployeeTableTableAnnotationComposer
@@ -3052,6 +3129,11 @@ class $$EmployeeTableTableAnnotationComposer
 
   GeneratedColumn<String> get createdAt =>
       $composableBuilder(column: $table.createdAt, builder: (column) => column);
+
+  GeneratedColumn<bool> get activeStatus => $composableBuilder(
+    column: $table.activeStatus,
+    builder: (column) => column,
+  );
 }
 
 class $$EmployeeTableTableTableManager
@@ -3096,6 +3178,7 @@ class $$EmployeeTableTableTableManager
                 Value<bool> isFromOwner = const Value.absent(),
                 Value<String?> shopId = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
+                Value<bool?> activeStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EmployeeTableCompanion(
                 id: id,
@@ -3105,6 +3188,7 @@ class $$EmployeeTableTableTableManager
                 isFromOwner: isFromOwner,
                 shopId: shopId,
                 createdAt: createdAt,
+                activeStatus: activeStatus,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3116,6 +3200,7 @@ class $$EmployeeTableTableTableManager
                 Value<bool> isFromOwner = const Value.absent(),
                 Value<String?> shopId = const Value.absent(),
                 required String createdAt,
+                Value<bool?> activeStatus = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EmployeeTableCompanion.insert(
                 id: id,
@@ -3125,6 +3210,7 @@ class $$EmployeeTableTableTableManager
                 isFromOwner: isFromOwner,
                 shopId: shopId,
                 createdAt: createdAt,
+                activeStatus: activeStatus,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

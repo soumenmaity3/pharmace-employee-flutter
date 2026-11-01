@@ -328,4 +328,100 @@ class ApiService {
       return ApiResponse(statusCode: 500, data: null, message: e.toString());
     }
   }
+
+  Future<ApiResponse<EmpBody>> changeActiveStatus({
+    required String empId,
+    required String shopId,
+  }) async {
+    try {
+      final token = await SecureStorageService.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse(
+          statusCode: 401,
+          data: null,
+          message: 'Token is not valid',
+        );
+      }
+
+      final response = await http
+          .put(
+            Uri.parse('$baseUrl/empe/change-active/$shopId/$empId'),
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': 'Bearer $token',
+            },
+          )
+          .timeout(const Duration(seconds: 15));
+
+      EmpBody? updatedEmp;
+      String? message;
+
+      if (response.body.trim().isNotEmpty) {
+        try {
+          final decode = jsonDecode(response.body);
+          if (decode is Map<String, dynamic>) {
+            updatedEmp = EmpBody.fromJson(decode);
+            message =
+                decode['message']?.toString() ??
+                decode['error']?.toString() ??
+                decode['detail']?.toString();
+          } else {
+            message = decode.toString();
+          }
+        } on FormatException {
+          message = response.body.trim();
+        }
+      }
+
+      final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
+
+      return ApiResponse<EmpBody>(
+        statusCode: response.statusCode,
+        data: isSuccess ? updatedEmp : null,
+        message: message ?? (isSuccess ? null : 'Failed to update active status'),
+      );
+    } catch (e) {
+      return ApiResponse(statusCode: 500, data: null, message: e.toString());
+    }
+  }
 }
+
+//
+// {
+// "id" : "a9ebcd13-149b-443c-9237-5a7d33924c00",
+// "name" : "Klai 6",
+// "email" : "kali6@gmail.com",
+// "password" : "$2a$12$DNkDe.TRIzoV4TEaghy9jeMb2BuMGlNM0LAoC0bzZeswDrbXPmbwO",
+// "role" : "Staff",
+// "isFromOwner" : false,
+// "activeStatus" : true,
+// "createdAt" : "2026-10-30 11:56:05",
+// "shop" : {
+// "id" : "e9bf459e-0307-458a-a580-60768d3eda05",
+// "shopName" : "xxx medical hall",
+// "shopCode" : "PHM-F403F2",
+// "shopEmail" : "xxx@123",
+// "phone" : "8338388388",
+// "address" : "cgv",
+// "city" : "Medinīpur",
+// "state" : "West Bengal",
+// "pincode" : "721101",
+// "licenseNumber" : "",
+// "gstNumber" : "",
+// "verifyStatus" : "Pending",
+// "logoUrl" : null,
+// "isOpen" : false,
+// "isOwnerEmployee" : false,
+// "owner" : {
+// "id" : "a3ebeff3-c76b-4b73-9656-29e6f5132f73",
+// "name" : "Soumen Maity",
+// "email" : "sm8039912@gmail.com",
+// "password" : "$2a$12$8Nrrwl9H1tRohhUaXkhqyOvjSZcCPtmoSqaAgeUJsZU0njbA/TVRS",
+// "role" : "OWNER",
+// "isShopHave" : true,
+// "createdAt" : "2026-10-09 09:12:49",
+// "hibernateLazyInitializer" : { }
+// },
+// "createdAt" : "2026-10-09 18:28:55"
+// }
+// }

@@ -11,6 +11,7 @@ class TeamMemberWidget extends StatelessWidget {
     required this.role,
     required this.isOnDuty,
     this.isFromOwner = false,
+    this.isOwnAccount = false,
     required this.onMarkInactive,
     this.onSendMessage,
   });
@@ -20,6 +21,7 @@ class TeamMemberWidget extends StatelessWidget {
   final String role;
   final bool isOnDuty;
   final bool isFromOwner;
+  final bool isOwnAccount;
   final VoidCallback? onMarkInactive;
   final VoidCallback? onSendMessage;
 
@@ -27,6 +29,7 @@ class TeamMemberWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
+
 
     return Container(
       width: double.infinity,
@@ -131,6 +134,18 @@ class TeamMemberWidget extends StatelessWidget {
                   label: 'Owner',
                   isDark: isDark,
                 ),
+              if (isOwnAccount)
+                EmployeeHeaderWidget.buildBadge(
+                  background: isDark
+                      ? AppColors.managerPurpleBackground
+                      : AppColors.managerBackground,
+                  foreground: isDark
+                      ? AppColors.managerPurpleForeground
+                      : AppColors.managerForeground,
+                  icon: Icons.person_pin_rounded,
+                  label: 'You',
+                  isDark: isDark,
+                ),
             ],
           ),
           const SizedBox(height: 5),
@@ -149,23 +164,31 @@ class TeamMemberWidget extends StatelessWidget {
                 child: SizedBox(
                   height: 48,
                   child: OutlinedButton(
-                    onPressed: isFromOwner
+                    onPressed: (isFromOwner || isOwnAccount)
                         ? onMarkInactive
                         : (isOnDuty ? onMarkInactive : null),
                     style: OutlinedButton.styleFrom(
                       side: BorderSide(
                         color: isFromOwner
                             ? (isDark ? AppColors.goldDark : AppColors.gold)
-                            : (isDark
-                                  ? AppColors.darkBorder
-                                  : AppColors.lightBorder),
+                            : isOwnAccount
+                                ? (isDark
+                                      ? AppColors.managerPurpleForeground
+                                      : AppColors.managerForeground)
+                                : (isDark
+                                      ? AppColors.darkBorder
+                                      : AppColors.lightBorder),
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
                     child: Text(
-                      isFromOwner ? 'Owner Account' : 'Mark inactive',
+                      isFromOwner
+                          ? 'Owner Account'
+                          : isOwnAccount
+                              ? 'Your Account'
+                              : 'Mark inactive',
                       textAlign: TextAlign.center,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -174,7 +197,11 @@ class TeamMemberWidget extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         color: isFromOwner
                             ? (isDark ? AppColors.goldDark : AppColors.gold)
-                            : null,
+                            : isOwnAccount
+                                ? (isDark
+                                      ? AppColors.managerPurpleForeground
+                                      : AppColors.managerForeground)
+                                : null,
                       ),
                     ),
                   ),
@@ -189,11 +216,17 @@ class TeamMemberWidget extends StatelessWidget {
                     icon: Icon(
                       isFromOwner
                           ? Icons.report_problem_outlined
-                          : Icons.chat_bubble_outline_rounded,
+                          : isOwnAccount
+                              ? Icons.person_outline_rounded
+                              : Icons.chat_bubble_outline_rounded,
                       size: 18,
                     ),
                     label: Text(
-                      isFromOwner ? 'Complaint' : 'Message',
+                      isFromOwner
+                          ? 'Complaint'
+                          : isOwnAccount
+                              ? 'Profile'
+                              : 'Message',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -204,12 +237,22 @@ class TeamMemberWidget extends StatelessWidget {
                           ? (isDark
                                 ? AppColors.warningDarkContainer
                                 : AppColors.warningLight)
-                          : (isDark
-                                ? AppColors.primaryDark
-                                : AppColors.primary),
+                          : isOwnAccount
+                              ? (isDark
+                                    ? AppColors.managerPurpleBackground
+                                    : AppColors.managerBackground)
+                              : (isDark
+                                    ? AppColors.primaryDark
+                                    : AppColors.primary),
                       foregroundColor: isFromOwner
-                          ? (isDark ? AppColors.warningDark : AppColors.warning)
-                          : AppColors.white,
+                          ? (isDark
+                                ? AppColors.warningDark
+                                : AppColors.warning)
+                          : isOwnAccount
+                              ? (isDark
+                                    ? AppColors.managerPurpleForeground
+                                    : AppColors.managerForeground)
+                              : AppColors.white,
                       elevation: 0,
                       side: isFromOwner
                           ? BorderSide(
@@ -218,7 +261,14 @@ class TeamMemberWidget extends StatelessWidget {
                                   : AppColors.warning,
                               width: 1,
                             )
-                          : BorderSide.none,
+                          : isOwnAccount
+                              ? BorderSide(
+                                  color: isDark
+                                      ? AppColors.managerPurpleForeground
+                                      : AppColors.managerForeground,
+                                  width: 1,
+                                )
+                              : BorderSide.none,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
