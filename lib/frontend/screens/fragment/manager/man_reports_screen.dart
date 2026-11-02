@@ -26,7 +26,7 @@ class _ManReportsScreenState extends ConsumerState<ManReportsScreen> {
     return SafeArea(
       child: Scaffold(
         body: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
+          // physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
