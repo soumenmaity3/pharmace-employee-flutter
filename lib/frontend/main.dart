@@ -38,7 +38,7 @@ void main() async {
     });
   }
 
-  runApp(const MyApp());
+  runApp(const ProviderScope(child: MyApp()));
 }
 
 class MyApp extends StatefulWidget {
@@ -75,11 +75,9 @@ class _MyAppState extends State<MyApp> {
       scrollBehavior: const MaterialScrollBehavior().copyWith(
         scrollbars: false,
       ),
-      home: ProviderScope(
-        child: PharmaceEmpApp(
-          currentThemeMode: _themeMode,
-          onThemeChanged: toggleTheme,
-        ),
+      home: PharmaceEmpApp(
+        currentThemeMode: _themeMode,
+        onThemeChanged: toggleTheme,
       ),
     );
   }
@@ -100,8 +98,6 @@ class PharmaceEmpApp extends ConsumerStatefulWidget {
 }
 
 class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
-  int _selectedIndex = 0;
-
   static Future<bool> _isTokenExpired() async {
     final token = await SecureStorageService.getToken();
     if (token == null || token.isEmpty) {
@@ -126,9 +122,7 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
             if (isExpired) {
               await ref.read(employeeProvider.notifier).clearEmployee();
               if (!mounted) return;
-              setState(() {
-                _selectedIndex = 0;
-              });
+              ref.read(selectedNavIndexProvider.notifier).state = 0;
               ref.read(appViewProvider.notifier).state = AppView.login;
               return;
             }
@@ -138,17 +132,13 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
             if (employee == null) {
               await ref.read(employeeProvider.notifier).clearEmployee();
               if (!mounted) return;
-              setState(() {
-                _selectedIndex = 0;
-              });
+              ref.read(selectedNavIndexProvider.notifier).state = 0;
               ref.read(appViewProvider.notifier).state = AppView.login;
               return;
             }
 
             if (!mounted) return;
-            setState(() {
-              ref.read(appViewProvider.notifier).state = AppView.dashboard;
-            });
+            ref.read(appViewProvider.notifier).state = AppView.dashboard;
           },
         ),
 
@@ -158,9 +148,7 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
             ref.read(appViewProvider.notifier).state = AppView.signup;
           },
           onLogin: () {
-            setState(() {
-              _selectedIndex = 0;
-            });
+            ref.read(selectedNavIndexProvider.notifier).state = 0;
             ref.read(appViewProvider.notifier).state = AppView.dashboard;
           },
         ),
@@ -191,12 +179,14 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
 
   Widget _buildMainScaffold() {
     final employeeState = ref.watch(employeeProvider);
+    final navIndex = ref.watch(selectedNavIndexProvider);
 
     return employeeState.when(
       loading: () =>
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (error, stackTrace) {
         WidgetsBinding.instance.addPostFrameCallback((_) {
+          ref.read(selectedNavIndexProvider.notifier).state = 0;
           ref.read(employeeProvider.notifier).clearEmployee();
           ref.read(appViewProvider.notifier).state = AppView.login;
         });
@@ -205,6 +195,7 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
       data: (employee) {
         if (employee == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
+            ref.read(selectedNavIndexProvider.notifier).state = 0;
             ref.read(employeeProvider.notifier).clearEmployee();
             ref.read(appViewProvider.notifier).state = AppView.login;
           });
@@ -213,12 +204,12 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
           );
         }
 
-        final role = _roleFromString(employee!.role);
+        final role = _roleFromString(employee.role);
         final items = navItemsForRole(role, ref, context);
 
         // Keep the selected index within the available destinations.
-        final selectedIndex = _selectedIndex < items.length
-            ? _selectedIndex
+        final selectedIndex = navIndex < items.length
+            ? navIndex
             : 0;
 
         return Scaffold(
@@ -270,9 +261,7 @@ class _PharmaceEmpAppState extends ConsumerState<PharmaceEmpApp> {
               child: InkWell(
                 borderRadius: BorderRadius.circular(16),
                 onTap: () {
-                  setState(() {
-                    _selectedIndex = index;
-                  });
+                  ref.read(selectedNavIndexProvider.notifier).state = index;
                 },
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 220),

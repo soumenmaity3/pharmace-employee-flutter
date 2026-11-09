@@ -21,6 +21,7 @@ class EmployeeDao extends DatabaseAccessor<AppDatabase>
       password: '',
       role: employee.role,
       isFromOwner: employee.isFromOwner,
+      isLogOut: employee.isLogOut,
       createdAt: employee.createdAt,
     );
   }
@@ -33,14 +34,27 @@ class EmployeeDao extends DatabaseAccessor<AppDatabase>
         EmployeeTableCompanion.insert(
           id: emp.id,
           name: emp.name,
-          email: emp.email!,
-          isFromOwner: Value(emp.isFromOwner!),
-          role: Value(emp.role!),
+          email: emp.email ?? '',
+          isFromOwner: Value(emp.isFromOwner ?? true),
+          role: Value(emp.role ?? 'Manager'),
           shopId: Value(emp.shop?.id),
-          createdAt: emp.createdAt!,
+          isLogOut: Value(emp.isLogOut ?? false),
+          createdAt: emp.createdAt ?? DateTime.now().toIso8601String(),
         ),
       );
     });
+  }
+
+  Future<void> shiftLogout({required String empId, required bool isLogOut}) async {
+    if (empId.isNotEmpty) {
+      await (update(employeeTable)..where((t) => t.id.equals(empId))).write(
+        EmployeeTableCompanion(isLogOut: Value(isLogOut)),
+      );
+    } else {
+      await update(employeeTable).write(
+        EmployeeTableCompanion(isLogOut: Value(isLogOut)),
+      );
+    }
   }
 
   Future<void> deleteAll() async {

@@ -31,6 +31,7 @@ class MedicineNotifier extends StateNotifier<InventoryState> {
     final medicines = await db.medicineDao.getAllMedicines(
       currentShopId,
     );
+    if (!mounted) return;
     final items = medicines.map((item) => item.toOutputModel()).toList();
     state = state.copyWith(allItems: items, filteredItems: items);
   }
@@ -40,6 +41,7 @@ class MedicineNotifier extends StateNotifier<InventoryState> {
       String currentShopId,
       ) async {
     await db.medicineDao.syncMedicines(remoteList, currentShopId);
+    if (!mounted) return;
     await loadAllMedicines(currentShopId);
   }
 
@@ -53,6 +55,7 @@ class MedicineNotifier extends StateNotifier<InventoryState> {
       page: page,
       size: size,
     );
+    if (!mounted) return response;
     if (response.statusCode >= 200 &&
         response.statusCode < 300 &&
         response.data != null) {
@@ -64,6 +67,7 @@ class MedicineNotifier extends StateNotifier<InventoryState> {
   Future<void> add(MedicineOutputModel medicineItem) async {
     // 1. Save to SQLite
     await db.medicineDao.insertMedicine(medicineItem);
+    if (!mounted) return;
 
     // 2. Update Riverpod state
     final updateList = [...state.allItems, medicineItem];
@@ -74,6 +78,7 @@ class MedicineNotifier extends StateNotifier<InventoryState> {
   Future<void> updateMedicine(MedicineOutputModel updatedMedicine) async {
     // 1. Save to SQLite
     await db.medicineDao.insertMedicine(updatedMedicine);
+    if (!mounted) return;
 
     // 2. Update Riverpod state
     final updatedList = state.allItems.map((item) {

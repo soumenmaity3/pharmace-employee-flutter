@@ -218,7 +218,7 @@ class TeamMemberWidget extends StatelessWidget {
                           ? Icons.report_problem_outlined
                           : isOwnAccount
                               ? Icons.person_outline_rounded
-                              : Icons.chat_bubble_outline_rounded,
+                              : Icons.task_alt_outlined,
                       size: 18,
                     ),
                     label: Text(
@@ -226,7 +226,7 @@ class TeamMemberWidget extends StatelessWidget {
                           ? 'Complaint'
                           : isOwnAccount
                               ? 'Profile'
-                              : 'Message',
+                              : 'Assign Task',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,

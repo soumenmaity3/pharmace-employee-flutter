@@ -18,6 +18,8 @@ class EmployeeTable extends Table {
   BoolColumn get activeStatus =>
       boolean().nullable().withDefault(const Constant(false))();
 
+  BoolColumn get isLogOut => boolean().withDefault(const Constant(false))();
+
   @override
   Set<Column> get primaryKey => {id};
 }

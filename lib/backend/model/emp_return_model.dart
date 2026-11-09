@@ -5,8 +5,8 @@ class EmpReturnModel {
   EmpReturnModel({this.body, this.token});
 
   factory EmpReturnModel.fromJson(Map<String, dynamic> json) => EmpReturnModel(
-    body: json["body"] == null ? null : EmpBody.fromJson(json["body"]),
-    token: json["token"],
+    body: json["body"] == null ? null : EmpBody.fromJson(json["body"] as Map<String, dynamic>),
+    token: json["token"]?.toString() ?? json["accessToken"]?.toString() ?? json["jwt"]?.toString(),
   );
 
   Map<String, dynamic> toJson() => {"body": body?.toJson(), "token": token};
@@ -20,6 +20,7 @@ class EmpBody {
   final String? role;
   final bool? isFromOwner;
   final bool? activeStatus;
+  final bool? isLogOut;
   final String? createdAt;
   final Shop? shop;
 
@@ -31,20 +32,24 @@ class EmpBody {
     this.role,
     this.isFromOwner,
     this.activeStatus,
+    this.isLogOut,
     this.createdAt,
     this.shop,
   });
 
   factory EmpBody.fromJson(Map<String, dynamic> json) => EmpBody(
-    id: json["id"]!.toString(),
-    name: json["name"]!.toString(),
-    email: json["email"]!.toString(),
-    password: json["password"]!.toString(),
-    role: json["role"]!.toString(),
-    isFromOwner: json["isFromOwner"],
-    activeStatus: json["activeStatus"],
-    createdAt: json["createdAt"]!.toString(),
-    shop: json["shop"] == null ? null : Shop.fromJson(json["shop"]),
+    id: json["id"]?.toString() ?? '',
+    name: json["name"]?.toString() ?? '',
+    email: json["email"]?.toString(),
+    password: json["password"]?.toString(),
+    role: json["role"]?.toString(),
+    isFromOwner: json["isFromOwner"] as bool?,
+    activeStatus: json["activeStatus"] as bool?,
+    isLogOut: json["isLogOut"] as bool?,
+    createdAt: json["createdAt"]?.toString(),
+    shop: json["shop"] == null || json["shop"] is! Map<String, dynamic>
+        ? null
+        : Shop.fromJson(json["shop"] as Map<String, dynamic>),
   );
 
   static List<EmpBody> fromJsonList(List<dynamic> jsonList) {
@@ -55,6 +60,32 @@ class EmpBody {
         .toList();
   }
 
+  EmpBody copyWith({
+    String? id,
+    String? name,
+    String? email,
+    String? password,
+    String? role,
+    bool? isFromOwner,
+    bool? activeStatus,
+    bool? isLogOut,
+    String? createdAt,
+    Shop? shop,
+  }) {
+    return EmpBody(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      role: role ?? this.role,
+      isFromOwner: isFromOwner ?? this.isFromOwner,
+      activeStatus: activeStatus ?? this.activeStatus,
+      isLogOut: isLogOut ?? this.isLogOut,
+      createdAt: createdAt ?? this.createdAt,
+      shop: shop ?? this.shop,
+    );
+  }
+
   Map<String, dynamic> toJson() => {
     "id": id,
     "name": name,
@@ -63,6 +94,7 @@ class EmpBody {
     "role": role,
     "isFromOwner": isFromOwner,
     "activeStatus":activeStatus,
+    "isLogOut": isLogOut,
     "createdAt": createdAt,
     "shop": shop?.toJson(),
   };
@@ -108,7 +140,7 @@ class Shop {
   });
 
   factory Shop.fromJson(Map<String, dynamic> json) => Shop(
-    id: json["id"]!.toString(),
+    id: json["id"]?.toString() ?? '',
     shopName: json["shopName"]?.toString(),
     shopCode: json["shopCode"]?.toString(),
     shopEmail: json["shopEmail"]?.toString(),
@@ -120,13 +152,17 @@ class Shop {
     licenseNumber: json["licenseNumber"]?.toString(),
     gstNumber: json["gstNumber"]?.toString(),
     verifyStatus: Verify.values.firstWhere(
-      (status) => status.label == json['verifyStatus'],
+      (status) =>
+          status.label.toLowerCase() == json['verifyStatus']?.toString().toLowerCase() ||
+          status.name.toLowerCase() == json['verifyStatus']?.toString().toLowerCase(),
       orElse: () => Verify.pending,
     ),
     logoUrl: json["logoUrl"]?.toString(),
-    isOpen: json["isOpen"],
-    isOwnerEmployee: json["isOwnerEmployee"],
-    owner: json["owner"] == null ? null : Owner.fromJson(json["owner"]),
+    isOpen: json["isOpen"] as bool?,
+    isOwnerEmployee: json["isOwnerEmployee"] as bool?,
+    owner: json["owner"] == null || json["owner"] is! Map<String, dynamic>
+        ? null
+        : Owner.fromJson(json["owner"] as Map<String, dynamic>),
     createdAt: json["createdAt"]?.toString(),
   );
 

@@ -20,12 +20,14 @@ class ApiService {
       // 1. Fetch employee invite info
       final response = await http
           .get(
-            Uri.parse('$baseUrl/empe/EmpBYInvtId?inviteId=$inviteCode'),
-            headers: {'Content-Type': 'application/json'},
-          )
+        Uri.parse('$baseUrl/empe/EmpBYInvtId?inviteId=$inviteCode'),
+        headers: {'Content-Type': 'application/json'},
+      )
           .timeout(const Duration(seconds: 15));
 
-      if (response.statusCode != 200 || response.body.trim().isEmpty) {
+      if (response.statusCode != 200 || response.body
+          .trim()
+          .isEmpty) {
         String? message;
         try {
           final decode = jsonDecode(response.body);
@@ -73,22 +75,24 @@ class ApiService {
     try {
       final response = await http
           .get(
-            Uri.parse('$baseUrl/empe/owner-shopById/$ownerId/$shopId'),
-            headers: {'Content-Type': 'application/json'},
-          )
+        Uri.parse('$baseUrl/empe/owner-shopById/$ownerId/$shopId'),
+        headers: {'Content-Type': 'application/json'},
+      )
           .timeout(const Duration(seconds: 15));
 
       Map<String, dynamic>? data;
       String? message;
 
-      if (response.body.trim().isNotEmpty) {
+      if (response.body
+          .trim()
+          .isNotEmpty) {
         final decode = jsonDecode(response.body);
         if (decode is Map<String, dynamic>) {
           data = decode;
           message =
               decode['message']?.toString() ??
-              decode['details']?.toString() ??
-              decode['error']?.toString();
+                  decode['details']?.toString() ??
+                  decode['error']?.toString();
         } else {
           message = decode.toString();
         }
@@ -115,30 +119,32 @@ class ApiService {
     try {
       final response = await http
           .post(
-            Uri.parse('$baseUrl/empe/register/$shopId'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({
-              'role': role,
-              'email': email,
-              'name': name,
-              'password': password,
-              if (phone != null && phone.isNotEmpty) 'phone': phone,
-            }),
-          )
+        Uri.parse('$baseUrl/empe/register/$shopId'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({
+          'role': role,
+          'email': email,
+          'name': name,
+          'password': password,
+          if (phone != null && phone.isNotEmpty) 'phone': phone,
+        }),
+      )
           .timeout(const Duration(seconds: 15));
 
       Map<String, dynamic>? data;
       String? message;
 
-      if (response.body.trim().isNotEmpty) {
+      if (response.body
+          .trim()
+          .isNotEmpty) {
         try {
           final decode = jsonDecode(response.body);
           if (decode is Map<String, dynamic>) {
             data = decode;
             message =
                 decode['message']?.toString() ??
-                decode['details']?.toString() ??
-                decode['error']?.toString();
+                    decode['details']?.toString() ??
+                    decode['error']?.toString();
           } else {
             message = decode.toString();
           }
@@ -162,31 +168,40 @@ class ApiService {
     try {
       final response = await http
           .post(
-            Uri.parse('$baseUrl/empe/sign-in'),
-            headers: {'Content-Type': 'application/json'},
-            body: jsonEncode({'email': email, 'password': password}),
-          )
-          .timeout(Duration(seconds: 15));
+        Uri.parse('$baseUrl/empe/sign-in'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode({'email': email, 'password': password}),
+      )
+          .timeout(const Duration(seconds: 30));
       EmpReturnModel? empReturnModel;
       String? message;
-      if (response.body.trim().isNotEmpty) {
+      if (response.body
+          .trim()
+          .isNotEmpty) {
         try {
           final decode = jsonDecode(response.body);
           if (decode is Map<String, dynamic>) {
             empReturnModel = EmpReturnModel.fromJson(decode);
             message =
                 decode['message']?.toString() ??
-                decode['details']?.toString() ??
-                decode['error']?.toString();
+                    decode['details']?.toString() ??
+                    decode['error']?.toString();
           } else {
             message = decode.toString();
           }
-        } catch (_) {}
+        } catch (e) {
+          message = "Failed to parse response: $e";
+        }
       }
+      final isSuccess = response.statusCode >= 200 && response.statusCode < 300;
       return ApiResponse(
         statusCode: response.statusCode,
-        data: empReturnModel,
-        message: message,
+        data: isSuccess ? empReturnModel : null,
+        message:
+        message ??
+            (isSuccess
+                ? null
+                : 'Sign in failed with status ${response.statusCode}'),
       );
     } catch (e) {
       return ApiResponse(statusCode: 500, data: null, message: e.toString());
@@ -210,22 +225,24 @@ class ApiService {
 
       final response = await http
           .get(
-            Uri.parse(
-              '$baseUrl/inv/get-inv/$shopId'
+        Uri.parse(
+          '$baseUrl/inv/get-inv/$shopId'
               '?page=$page'
               '&size=$size',
-            ),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          )
+        ),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      )
           .timeout(const Duration(seconds: 15));
 
       List<MedicineOutputModel>? medicines;
       String? message;
 
-      if (response.body.trim().isNotEmpty) {
+      if (response.body
+          .trim()
+          .isNotEmpty) {
         try {
           final decoded = jsonDecode(response.body);
 
@@ -234,14 +251,14 @@ class ApiService {
           } else if (decoded is Map<String, dynamic>) {
             message =
                 decoded['message']?.toString() ??
-                decoded['error']?.toString() ??
-                decoded['detail']?.toString();
+                    decoded['error']?.toString() ??
+                    decoded['detail']?.toString();
 
             final rawList =
                 decoded['content'] ??
-                decoded['data'] ??
-                decoded['items'] ??
-                decoded['medicines'];
+                    decoded['data'] ??
+                    decoded['items'] ??
+                    decoded['medicines'];
 
             if (rawList is List) {
               medicines = MedicineOutputModel.fromJsonList(rawList);
@@ -282,16 +299,18 @@ class ApiService {
       }
       final response = await http
           .get(
-            Uri.parse('$baseUrl/empe/get-all/$shopId'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          )
+        Uri.parse('$baseUrl/empe/get-all/$shopId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      )
           .timeout(Duration(seconds: 15));
       List<EmpBody>? allEmployee;
       String? message;
-      if (response.body.trim().isNotEmpty) {
+      if (response.body
+          .trim()
+          .isNotEmpty) {
         try {
           final decode = jsonDecode(response.body);
           if (decode is List) {
@@ -299,14 +318,14 @@ class ApiService {
           } else if (decode is Map<String, dynamic>) {
             message =
                 decode['message']?.toString() ??
-                decode['error']?.toString() ??
-                decode['detail']?.toString();
+                    decode['error']?.toString() ??
+                    decode['detail']?.toString();
 
             final rawList =
                 decode['content'] ??
-                decode['data'] ??
-                decode['items'] ??
-                decode['employee'];
+                    decode['data'] ??
+                    decode['items'] ??
+                    decode['employee'];
             if (rawList is List) {
               allEmployee = EmpBody.fromJsonList(rawList);
             }
@@ -345,26 +364,28 @@ class ApiService {
 
       final response = await http
           .put(
-            Uri.parse('$baseUrl/empe/change-active/$shopId/$empId'),
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': 'Bearer $token',
-            },
-          )
+        Uri.parse('$baseUrl/empe/change-active/$shopId/$empId'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      )
           .timeout(const Duration(seconds: 15));
 
       EmpBody? updatedEmp;
       String? message;
 
-      if (response.body.trim().isNotEmpty) {
+      if (response.body
+          .trim()
+          .isNotEmpty) {
         try {
           final decode = jsonDecode(response.body);
           if (decode is Map<String, dynamic>) {
             updatedEmp = EmpBody.fromJson(decode);
             message =
                 decode['message']?.toString() ??
-                decode['error']?.toString() ??
-                decode['detail']?.toString();
+                    decode['error']?.toString() ??
+                    decode['detail']?.toString();
           } else {
             message = decode.toString();
           }
@@ -378,50 +399,58 @@ class ApiService {
       return ApiResponse<EmpBody>(
         statusCode: response.statusCode,
         data: isSuccess ? updatedEmp : null,
-        message: message ?? (isSuccess ? null : 'Failed to update active status'),
+        message:
+        message ?? (isSuccess ? null : 'Failed to update active status'),
+      );
+    } catch (e) {
+      return ApiResponse(statusCode: 500, data: null, message: e.toString());
+    }
+  }
+
+  Future<ApiResponse<void>> logOutEmployee() async {
+    try {
+      final token = await SecureStorageService.getToken();
+      if (token == null || token.isEmpty) {
+        return ApiResponse(
+          statusCode: 401,
+          data: null,
+          message: 'Token is not valid',
+        );
+      }
+      final response = await http
+          .put(
+        Uri.parse('$baseUrl/empe/log-out'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      )
+          .timeout(const Duration(seconds: 15));
+      String? message;
+      if (response.body.trim().isNotEmpty) {
+        try {
+          final decode = jsonDecode(response.body);
+          if (decode is Map<String, dynamic>) {
+            message =
+                decode['message']?.toString() ??
+                decode['error']?.toString() ??
+                decode['detail']?.toString();
+          } else if (decode is String) {
+            message = decode;
+          } else {
+            message = decode.toString();
+          }
+        } catch (_) {}
+      }
+      final isSuccess =
+          response.statusCode >= 200 && response.statusCode < 300;
+      return ApiResponse<void>(
+        statusCode: response.statusCode,
+        data: null,
+        message: message ?? (isSuccess ? null : 'Failed to log out'),
       );
     } catch (e) {
       return ApiResponse(statusCode: 500, data: null, message: e.toString());
     }
   }
 }
-
-//
-// {
-// "id" : "a9ebcd13-149b-443c-9237-5a7d33924c00",
-// "name" : "Klai 6",
-// "email" : "kali6@gmail.com",
-// "password" : "$2a$12$DNkDe.TRIzoV4TEaghy9jeMb2BuMGlNM0LAoC0bzZeswDrbXPmbwO",
-// "role" : "Staff",
-// "isFromOwner" : false,
-// "activeStatus" : true,
-// "createdAt" : "2026-10-30 11:56:05",
-// "shop" : {
-// "id" : "e9bf459e-0307-458a-a580-60768d3eda05",
-// "shopName" : "xxx medical hall",
-// "shopCode" : "PHM-F403F2",
-// "shopEmail" : "xxx@123",
-// "phone" : "8338388388",
-// "address" : "cgv",
-// "city" : "Medinīpur",
-// "state" : "West Bengal",
-// "pincode" : "721101",
-// "licenseNumber" : "",
-// "gstNumber" : "",
-// "verifyStatus" : "Pending",
-// "logoUrl" : null,
-// "isOpen" : false,
-// "isOwnerEmployee" : false,
-// "owner" : {
-// "id" : "a3ebeff3-c76b-4b73-9656-29e6f5132f73",
-// "name" : "Soumen Maity",
-// "email" : "sm8039912@gmail.com",
-// "password" : "$2a$12$8Nrrwl9H1tRohhUaXkhqyOvjSZcCPtmoSqaAgeUJsZU0njbA/TVRS",
-// "role" : "OWNER",
-// "isShopHave" : true,
-// "createdAt" : "2026-10-09 09:12:49",
-// "hibernateLazyInitializer" : { }
-// },
-// "createdAt" : "2026-10-09 18:28:55"
-// }
-// }

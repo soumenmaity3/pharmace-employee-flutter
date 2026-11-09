@@ -96,6 +96,21 @@ class $EmployeeTableTable extends EmployeeTable
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _isLogOutMeta = const VerificationMeta(
+    'isLogOut',
+  );
+  @override
+  late final GeneratedColumn<bool> isLogOut = GeneratedColumn<bool>(
+    'is_log_out',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_log_out" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -106,6 +121,7 @@ class $EmployeeTableTable extends EmployeeTable
     shopId,
     createdAt,
     activeStatus,
+    isLogOut,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -178,6 +194,12 @@ class $EmployeeTableTable extends EmployeeTable
         ),
       );
     }
+    if (data.containsKey('is_log_out')) {
+      context.handle(
+        _isLogOutMeta,
+        isLogOut.isAcceptableOrUnknown(data['is_log_out']!, _isLogOutMeta),
+      );
+    }
     return context;
   }
 
@@ -219,6 +241,10 @@ class $EmployeeTableTable extends EmployeeTable
         DriftSqlType.bool,
         data['${effectivePrefix}active_status'],
       ),
+      isLogOut: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_log_out'],
+      )!,
     );
   }
 
@@ -238,6 +264,7 @@ class EmployeeTableData extends DataClass
   final String? shopId;
   final String createdAt;
   final bool? activeStatus;
+  final bool isLogOut;
   const EmployeeTableData({
     required this.id,
     required this.name,
@@ -247,6 +274,7 @@ class EmployeeTableData extends DataClass
     this.shopId,
     required this.createdAt,
     this.activeStatus,
+    required this.isLogOut,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -263,6 +291,7 @@ class EmployeeTableData extends DataClass
     if (!nullToAbsent || activeStatus != null) {
       map['active_status'] = Variable<bool>(activeStatus);
     }
+    map['is_log_out'] = Variable<bool>(isLogOut);
     return map;
   }
 
@@ -280,6 +309,7 @@ class EmployeeTableData extends DataClass
       activeStatus: activeStatus == null && nullToAbsent
           ? const Value.absent()
           : Value(activeStatus),
+      isLogOut: Value(isLogOut),
     );
   }
 
@@ -297,6 +327,7 @@ class EmployeeTableData extends DataClass
       shopId: serializer.fromJson<String?>(json['shopId']),
       createdAt: serializer.fromJson<String>(json['createdAt']),
       activeStatus: serializer.fromJson<bool?>(json['activeStatus']),
+      isLogOut: serializer.fromJson<bool>(json['isLogOut']),
     );
   }
   @override
@@ -311,6 +342,7 @@ class EmployeeTableData extends DataClass
       'shopId': serializer.toJson<String?>(shopId),
       'createdAt': serializer.toJson<String>(createdAt),
       'activeStatus': serializer.toJson<bool?>(activeStatus),
+      'isLogOut': serializer.toJson<bool>(isLogOut),
     };
   }
 
@@ -323,6 +355,7 @@ class EmployeeTableData extends DataClass
     Value<String?> shopId = const Value.absent(),
     String? createdAt,
     Value<bool?> activeStatus = const Value.absent(),
+    bool? isLogOut,
   }) => EmployeeTableData(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -332,6 +365,7 @@ class EmployeeTableData extends DataClass
     shopId: shopId.present ? shopId.value : this.shopId,
     createdAt: createdAt ?? this.createdAt,
     activeStatus: activeStatus.present ? activeStatus.value : this.activeStatus,
+    isLogOut: isLogOut ?? this.isLogOut,
   );
   EmployeeTableData copyWithCompanion(EmployeeTableCompanion data) {
     return EmployeeTableData(
@@ -347,6 +381,7 @@ class EmployeeTableData extends DataClass
       activeStatus: data.activeStatus.present
           ? data.activeStatus.value
           : this.activeStatus,
+      isLogOut: data.isLogOut.present ? data.isLogOut.value : this.isLogOut,
     );
   }
 
@@ -360,7 +395,8 @@ class EmployeeTableData extends DataClass
           ..write('isFromOwner: $isFromOwner, ')
           ..write('shopId: $shopId, ')
           ..write('createdAt: $createdAt, ')
-          ..write('activeStatus: $activeStatus')
+          ..write('activeStatus: $activeStatus, ')
+          ..write('isLogOut: $isLogOut')
           ..write(')'))
         .toString();
   }
@@ -375,6 +411,7 @@ class EmployeeTableData extends DataClass
     shopId,
     createdAt,
     activeStatus,
+    isLogOut,
   );
   @override
   bool operator ==(Object other) =>
@@ -387,7 +424,8 @@ class EmployeeTableData extends DataClass
           other.isFromOwner == this.isFromOwner &&
           other.shopId == this.shopId &&
           other.createdAt == this.createdAt &&
-          other.activeStatus == this.activeStatus);
+          other.activeStatus == this.activeStatus &&
+          other.isLogOut == this.isLogOut);
 }
 
 class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
@@ -399,6 +437,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
   final Value<String?> shopId;
   final Value<String> createdAt;
   final Value<bool?> activeStatus;
+  final Value<bool> isLogOut;
   final Value<int> rowid;
   const EmployeeTableCompanion({
     this.id = const Value.absent(),
@@ -409,6 +448,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     this.shopId = const Value.absent(),
     this.createdAt = const Value.absent(),
     this.activeStatus = const Value.absent(),
+    this.isLogOut = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   EmployeeTableCompanion.insert({
@@ -420,6 +460,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     this.shopId = const Value.absent(),
     required String createdAt,
     this.activeStatus = const Value.absent(),
+    this.isLogOut = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        name = Value(name),
@@ -434,6 +475,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     Expression<String>? shopId,
     Expression<String>? createdAt,
     Expression<bool>? activeStatus,
+    Expression<bool>? isLogOut,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -445,6 +487,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
       if (shopId != null) 'shop_id': shopId,
       if (createdAt != null) 'created_at': createdAt,
       if (activeStatus != null) 'active_status': activeStatus,
+      if (isLogOut != null) 'is_log_out': isLogOut,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -458,6 +501,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     Value<String?>? shopId,
     Value<String>? createdAt,
     Value<bool?>? activeStatus,
+    Value<bool>? isLogOut,
     Value<int>? rowid,
   }) {
     return EmployeeTableCompanion(
@@ -469,6 +513,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
       shopId: shopId ?? this.shopId,
       createdAt: createdAt ?? this.createdAt,
       activeStatus: activeStatus ?? this.activeStatus,
+      isLogOut: isLogOut ?? this.isLogOut,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -500,6 +545,9 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
     if (activeStatus.present) {
       map['active_status'] = Variable<bool>(activeStatus.value);
     }
+    if (isLogOut.present) {
+      map['is_log_out'] = Variable<bool>(isLogOut.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -517,6 +565,7 @@ class EmployeeTableCompanion extends UpdateCompanion<EmployeeTableData> {
           ..write('shopId: $shopId, ')
           ..write('createdAt: $createdAt, ')
           ..write('activeStatus: $activeStatus, ')
+          ..write('isLogOut: $isLogOut, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2983,6 +3032,7 @@ typedef $$EmployeeTableTableCreateCompanionBuilder =
       Value<String?> shopId,
       required String createdAt,
       Value<bool?> activeStatus,
+      Value<bool> isLogOut,
       Value<int> rowid,
     });
 typedef $$EmployeeTableTableUpdateCompanionBuilder =
@@ -2995,6 +3045,7 @@ typedef $$EmployeeTableTableUpdateCompanionBuilder =
       Value<String?> shopId,
       Value<String> createdAt,
       Value<bool?> activeStatus,
+      Value<bool> isLogOut,
       Value<int> rowid,
     });
 
@@ -3044,6 +3095,11 @@ class $$EmployeeTableTableFilterComposer
 
   ColumnFilters<bool> get activeStatus => $composableBuilder(
     column: $table.activeStatus,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isLogOut => $composableBuilder(
+    column: $table.isLogOut,
     builder: (column) => ColumnFilters(column),
   );
 }
@@ -3096,6 +3152,11 @@ class $$EmployeeTableTableOrderingComposer
     column: $table.activeStatus,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get isLogOut => $composableBuilder(
+    column: $table.isLogOut,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$EmployeeTableTableAnnotationComposer
@@ -3134,6 +3195,9 @@ class $$EmployeeTableTableAnnotationComposer
     column: $table.activeStatus,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get isLogOut =>
+      $composableBuilder(column: $table.isLogOut, builder: (column) => column);
 }
 
 class $$EmployeeTableTableTableManager
@@ -3179,6 +3243,7 @@ class $$EmployeeTableTableTableManager
                 Value<String?> shopId = const Value.absent(),
                 Value<String> createdAt = const Value.absent(),
                 Value<bool?> activeStatus = const Value.absent(),
+                Value<bool> isLogOut = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EmployeeTableCompanion(
                 id: id,
@@ -3189,6 +3254,7 @@ class $$EmployeeTableTableTableManager
                 shopId: shopId,
                 createdAt: createdAt,
                 activeStatus: activeStatus,
+                isLogOut: isLogOut,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -3201,6 +3267,7 @@ class $$EmployeeTableTableTableManager
                 Value<String?> shopId = const Value.absent(),
                 required String createdAt,
                 Value<bool?> activeStatus = const Value.absent(),
+                Value<bool> isLogOut = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => EmployeeTableCompanion.insert(
                 id: id,
@@ -3211,6 +3278,7 @@ class $$EmployeeTableTableTableManager
                 shopId: shopId,
                 createdAt: createdAt,
                 activeStatus: activeStatus,
+                isLogOut: isLogOut,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0

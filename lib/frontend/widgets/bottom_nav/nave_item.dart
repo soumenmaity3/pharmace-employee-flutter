@@ -45,6 +45,7 @@ class NavItem {
 
 List<NavItem> navItemsForRole(UserRole role, WidgetRef ref, BuildContext context) {
   void handleLogout() async {
+    ref.read(selectedNavIndexProvider.notifier).state = 0;
     await ref.read(employeeProvider.notifier).clearEmployee();
     ref.read(appViewProvider.notifier).state = AppView.login;
   }

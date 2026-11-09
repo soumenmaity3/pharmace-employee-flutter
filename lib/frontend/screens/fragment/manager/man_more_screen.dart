@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pharmace_emp/backend/api_service.dart';
+import 'package:pharmace_emp/frontend/provider/app_view_provider.dart';
 import 'package:pharmace_emp/frontend/provider/employee_provider.dart';
 import 'package:pharmace_emp/frontend/provider/shop_provider.dart';
 import 'package:pharmace_emp/frontend/screens/fragment/manager/screens/activity_screen.dart';
@@ -7,6 +9,8 @@ import 'package:pharmace_emp/frontend/screens/fragment/manager/screens/billing_s
 import 'package:pharmace_emp/frontend/screens/fragment/manager/screens/refund_list_screen.dart';
 import 'package:pharmace_emp/frontend/screens/fragment/manager/screens/task_list_screen.dart';
 import 'package:pharmace_emp/frontend/theme/app_colors.dart';
+
+import '../../../../backend/model/emp_return_model.dart';
 
 class _MenuItem {
   final IconData icon;
@@ -37,162 +41,285 @@ class ManMoreScreen extends ConsumerWidget {
     final shop = ref.watch(shopProvider).value;
 
     return SafeArea(
-      child: Scaffold(
-        body: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Header Title
-              Text(
-                'More & Settings',
-                style: theme.textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
+            child: Scaffold(
+              body: SingleChildScrollView(
+                // physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
                 ),
-              ),
-              const SizedBox(height: 4),
-              Text(
-                'Manager controls, shop configurations, and account options.',
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: isDark
-                      ? AppColors.darkTextSecondary
-                      : AppColors.lightTextSecondary,
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Manager Profile Header Card
-              _buildProfileHeaderCard(context, theme, isDark, employee, shop),
-
-              const SizedBox(height: 20),
-
-              // Operations Section
-              _buildSectionTitle(context, 'Manager Operations'),
-              const SizedBox(height: 8),
-              _buildMenuCard(
-                context: context,
-                isDark: isDark,
-                items: [
-                  _MenuItem(
-                    icon: Icons.shopping_bag_outlined,
-                    title: 'Billing & POS',
-                    subtitle: 'Create new bill and checkout',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const BillingScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _MenuItem(
-                    icon: Icons.refresh_rounded,
-                    title: 'Refund Approvals',
-                    subtitle: 'Review customer return claims',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RefundListScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _MenuItem(
-                    icon: Icons.task_alt_rounded,
-                    title: 'Task Management',
-                    subtitle: 'Shift assignments and duties',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const TaskListScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                  _MenuItem(
-                    icon: Icons.local_activity_outlined,
-                    title: 'Activity Logs',
-                    subtitle: 'Audit trail of system events',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const ActivityScreen(),
-                        ),
-                      );
-                    },
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 20),
-
-              // Shop Details Section
-              _buildSectionTitle(context, 'Shop & Application'),
-              const SizedBox(height: 8),
-              _buildMenuCard(
-                context: context,
-                isDark: isDark,
-                items: [
-                  _MenuItem(
-                    icon: Icons.storefront_outlined,
-                    title: 'Shop Information',
-                    subtitle: shop?.shopName ?? 'Pharmacy Store',
-                    trailingText: shop?.shopCode ?? 'CODE',
-                    onTap: () =>
-                        _showShopDetailsBottomSheet(context, shop, isDark),
-                  ),
-                  _MenuItem(
-                    icon: Icons.info_outline_rounded,
-                    title: 'App Version',
-                    subtitle: 'Pharmase Employee v1.0.0',
-                    trailingText: 'v1.0.0',
-                  ),
-                ],
-              ),
-
-              const SizedBox(height: 28),
-
-              // Logout Button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: ElevatedButton.icon(
-                  onPressed: () => _showLogoutConfirmation(context),
-                  icon: const Icon(Icons.logout_rounded, size: 20),
-                  label: const Text(
-                    'Logout Account',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                  ),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: isDark
-                        ? AppColors.errorDarkContainer
-                        : AppColors.errorLight,
-                    foregroundColor: isDark
-                        ? AppColors.errorDark
-                        : AppColors.error,
-                    elevation: 0,
-                    side: BorderSide(
-                      color: isDark ? AppColors.errorDark : AppColors.error,
-                      width: 1,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Header Title
+                    Text(
+                      'More & Settings',
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Manager controls, shop configurations, and account options.',
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: isDark
+                            ? AppColors.darkTextSecondary
+                            : AppColors.lightTextSecondary,
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 16),
+
+                    // Manager Profile Header Card
+                    _buildProfileHeaderCard(
+                      context,
+                      theme,
+                      isDark,
+                      employee,
+                      shop,
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Operations Section
+                    _buildSectionTitle(context, 'Manager Operations'),
+                    const SizedBox(height: 8),
+                    _buildMenuCard(
+                      context: context,
+                      isDark: isDark,
+                      items: [
+                        _MenuItem(
+                          icon: Icons.shopping_bag_outlined,
+                          title: 'Billing & POS',
+                          subtitle: 'Create new bill and checkout',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const BillingScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _MenuItem(
+                          icon: Icons.refresh_rounded,
+                          title: 'Refund Approvals',
+                          subtitle: 'Review customer return claims',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const RefundListScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _MenuItem(
+                          icon: Icons.task_alt_rounded,
+                          title: 'Task Management',
+                          subtitle: 'Shift assignments and duties',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const TaskListScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                        _MenuItem(
+                          icon: Icons.local_activity_outlined,
+                          title: 'Activity Logs',
+                          subtitle: 'Audit trail of system events',
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const ActivityScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 20),
+
+                    // Shop Details Section
+                    _buildSectionTitle(context, 'Shop & Application'),
+                    const SizedBox(height: 8),
+                    _buildMenuCard(
+                      context: context,
+                      isDark: isDark,
+                      items: [
+                        _MenuItem(
+                          icon: Icons.storefront_outlined,
+                          title: 'Shop Information',
+                          subtitle: shop?.shopName ?? 'Pharmacy Store',
+                          trailingText: shop?.shopCode ?? 'CODE',
+                          onTap: () => _showShopDetailsBottomSheet(
+                            context,
+                            shop,
+                            isDark,
+                          ),
+                        ),
+                        _MenuItem(
+                          icon: Icons.info_outline_rounded,
+                          title: 'App Version',
+                          subtitle: 'Pharmase Employee v1.0.0',
+                          trailingText: 'v1.0.0',
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 28),
+
+                    // Today Shift Logout / Resume Card
+                    Builder(
+                      builder: (context) {
+                        final isShiftLoggedOut = employee?.isLogOut ?? false;
+                        return Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            onTap: () => _showShiftLogoutConfirmation(context, ref, employee),
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: isShiftLoggedOut
+                                    ? (isDark
+                                        ? AppColors.primaryContainer.withValues(alpha: 0.3)
+                                        : AppColors.primaryContainer)
+                                    : (isDark
+                                        ? AppColors.warningDarkContainer.withValues(alpha: 0.6)
+                                        : AppColors.warningLight),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isShiftLoggedOut
+                                      ? AppColors.primary.withValues(alpha: 0.4)
+                                      : (isDark
+                                          ? AppColors.warningDark.withValues(alpha: 0.4)
+                                          : AppColors.warning.withValues(alpha: 0.4)),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 44,
+                                    height: 44,
+                                    decoration: BoxDecoration(
+                                      color: isShiftLoggedOut
+                                          ? AppColors.primary.withValues(alpha: 0.15)
+                                          : (isDark
+                                              ? AppColors.warningDark.withValues(alpha: 0.2)
+                                              : AppColors.warning.withValues(alpha: 0.15)),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Icon(
+                                      isShiftLoggedOut
+                                          ? Icons.play_arrow_rounded
+                                          : Icons.punch_clock_rounded,
+                                      size: 22,
+                                      color: isShiftLoggedOut
+                                          ? AppColors.primary
+                                          : (isDark
+                                              ? AppColors.warningDark
+                                              : AppColors.warning),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          isShiftLoggedOut
+                                              ? 'Resume Today\'s Shift'
+                                              : 'Today Shift Logout',
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                            color: isShiftLoggedOut
+                                                ? AppColors.primary
+                                                : (isDark
+                                                    ? AppColors.warningDark
+                                                    : AppColors.warning),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          isShiftLoggedOut
+                                              ? 'Clock in & resume your work session'
+                                              : 'Clock out & conclude today\'s work session',
+                                          style: theme.textTheme.bodySmall?.copyWith(
+                                            color: isDark
+                                                ? AppColors.darkTextSecondary
+                                                : AppColors.lightTextSecondary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  Icon(
+                                    Icons.arrow_forward_ios_rounded,
+                                    size: 16,
+                                    color: isShiftLoggedOut
+                                        ? AppColors.primary
+                                        : (isDark
+                                            ? AppColors.warningDark
+                                            : AppColors.warning),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _showLogoutConfirmation(context),
+                        icon: const Icon(Icons.logout_rounded, size: 20),
+                        label: const Text(
+                          'Logout Account',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: isDark
+                              ? AppColors.errorDarkContainer
+                              : AppColors.errorLight,
+                          foregroundColor: isDark
+                              ? AppColors.errorDark
+                              : AppColors.error,
+                          elevation: 0,
+                          side: BorderSide(
+                            color: isDark
+                                ? AppColors.errorDark
+                                : AppColors.error,
+                            width: 1,
+                          ),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
                 ),
               ),
-
-              const SizedBox(height: 24),
-            ],
-          ),
-        ),
-      ),
-    );
+            ),
+          );
   }
 
   Widget _buildProfileHeaderCard(
@@ -598,6 +725,152 @@ class ManMoreScreen extends ConsumerWidget {
                         backgroundColor: isDark
                             ? AppColors.errorDark
                             : AppColors.error,
+                        foregroundColor: AppColors.white,
+                        elevation: 0,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showShiftLogoutConfirmation(
+    BuildContext context,
+    WidgetRef ref,
+    EmpBody? employee,
+  ) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final isShiftLoggedOut = employee?.isLogOut ?? false;
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: theme.colorScheme.surface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          insetPadding: const EdgeInsets.symmetric(horizontal: 28),
+          contentPadding: const EdgeInsets.fromLTRB(24, 28, 24, 12),
+          actionsPadding: const EdgeInsets.fromLTRB(24, 8, 24, 24),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 68,
+                height: 68,
+                decoration: BoxDecoration(
+                  color: (isShiftLoggedOut
+                          ? AppColors.primary
+                          : (isDark ? AppColors.warningDark : AppColors.warning))
+                      .withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  isShiftLoggedOut
+                      ? Icons.play_arrow_rounded
+                      : Icons.punch_clock_rounded,
+                  size: 32,
+                  color: isShiftLoggedOut
+                      ? AppColors.primary
+                      : (isDark ? AppColors.warningDark : AppColors.warning),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                isShiftLoggedOut ? 'Resume Today\'s Shift?' : 'End Today\'s Shift?',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: -0.4,
+                ),
+              ),
+              const SizedBox(height: 10),
+              Text(
+                isShiftLoggedOut
+                    ? 'Are you sure you want to resume your shift for today?\nYour active working session will be restored.'
+                    : 'Are you sure you want to end your shift for today?\nYour daily working session will be closed.',
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  height: 1.5,
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton(
+                      onPressed: () => Navigator.pop(dialogContext),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: theme.colorScheme.onSurface,
+                        side: BorderSide(
+                          color: theme.colorScheme.outline.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(fontWeight: FontWeight.w600),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: ElevatedButton.icon(
+                      onPressed: () async {
+                        Navigator.pop(dialogContext);
+
+                        if (!isShiftLoggedOut) {
+                          try {
+                            await ApiService().logOutEmployee();
+                          } catch (_) {}
+                          await ref
+                              .read(employeeProvider.notifier)
+                              .setShiftLogoutStatus(true);
+                          ref.read(selectedNavIndexProvider.notifier).state = 0;
+                        } else {
+                          await ref
+                              .read(employeeProvider.notifier)
+                              .setShiftLogoutStatus(false);
+                          ref.read(selectedNavIndexProvider.notifier).state = 0;
+                        }
+                      },
+                      icon: Icon(
+                        isShiftLoggedOut
+                            ? Icons.play_arrow_rounded
+                            : Icons.punch_clock_rounded,
+                        size: 18,
+                      ),
+                      label: Text(isShiftLoggedOut ? 'Resume' : 'End Shift'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: isShiftLoggedOut
+                            ? AppColors.primary
+                            : (isDark
+                                ? AppColors.warningDark
+                                : AppColors.warning),
                         foregroundColor: AppColors.white,
                         elevation: 0,
                         shape: RoundedRectangleBorder(

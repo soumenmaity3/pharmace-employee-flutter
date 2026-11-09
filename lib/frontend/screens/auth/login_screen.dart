@@ -57,6 +57,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
+    final messenger = ScaffoldMessenger.of(context);
+
     try {
       final response = await _apiService.empLogin(
         email: email,
@@ -65,20 +67,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
 
       if (!mounted) return;
 
-      if (response.statusCode == 200 && response.data != null) {
+      if (response.statusCode >= 200 &&
+          response.statusCode < 300 &&
+          response.data != null) {
         final empReturnModel = response.data!;
-        await SecureStorageService.saveToken(empReturnModel.token!);
+        if (empReturnModel.token != null && empReturnModel.token!.isNotEmpty) {
+          await SecureStorageService.saveToken(empReturnModel.token!);
+        }
+        if (!mounted) return;
         final db = ref.read(databaseProvider);
-        if (empReturnModel.body == null) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text('Employee body is empty...')));
+        if (empReturnModel.body == null && mounted) {
+          // ignore: use_build_context_synchronously
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Employee profile is empty.')));
         } else {
           await ref
               .read(employeeProvider.notifier)
               .saveEmployee(empReturnModel.body!);
         }
-        await db.shopDao.saveShop(empReturnModel);
+        if (empReturnModel.body?.shop != null) {
+          await db.shopDao.saveShop(empReturnModel);
+        }
 
         ref.invalidate(employeeProvider);
         ref.invalidate(shopProvider);
@@ -93,7 +101,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _errorMessage = 'Connection failed. Please try again.';
+        _errorMessage = 'An error occurred: $e';
       });
     } finally {
       if (mounted) {

@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:pharmace_emp/backend/api_service.dart';
 import 'package:pharmace_emp/backend/auth/secure_storage_service.dart';
 import 'package:pharmace_emp/backend/model/emp_return_model.dart';
 import 'package:pharmace_emp/frontend/provider/shop_provider.dart';
@@ -26,7 +27,24 @@ class EmployeeNotifier extends AsyncNotifier<EmpBody?> {
     state = AsyncData(emp);
   }
 
+  Future<void> setShiftLogoutStatus(bool isLogOut) async {
+    final currentEmp = state.value;
+    final db = ref.read(databaseProvider);
+    final empId = currentEmp?.id ?? '';
+    await db.employeeDao.shiftLogout(empId: empId, isLogOut: isLogOut);
+    if (currentEmp != null) {
+      state = AsyncData(currentEmp.copyWith(isLogOut: isLogOut));
+    } else {
+      final updatedEmp = await db.employeeDao.getEmployee();
+      state = AsyncData(updatedEmp);
+    }
+  }
+
   Future<void> clearEmployee() async {
+    try {
+      await ApiService().logOutEmployee();
+    } catch (_) {}
+
     final db = ref.read(databaseProvider);
     await db.employeeDao.deleteAll();
     await db.shopDao.deleteAll();

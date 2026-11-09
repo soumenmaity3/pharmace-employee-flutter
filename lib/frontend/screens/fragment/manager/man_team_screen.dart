@@ -5,6 +5,7 @@ import 'package:pharmace_emp/backend/model/emp_return_model.dart';
 import 'package:pharmace_emp/frontend/provider/employee_provider.dart';
 import 'package:pharmace_emp/frontend/provider/shop_provider.dart';
 import 'package:pharmace_emp/frontend/screens/fragment/manager/widgets/team/team_member_widget.dart';
+import 'package:pharmace_emp/frontend/widgets/task/assign_task_sheet.dart';
 import 'package:pharmace_emp/frontend/theme/app_colors.dart';
 
 class ManTeamScreen extends ConsumerStatefulWidget {
@@ -84,7 +85,7 @@ class _ManTeamScreenState extends ConsumerState<ManTeamScreen> {
     final shopId = shop?.id;
     final empId = emp.id;
 
-    if (shopId == null || empId == null) return;
+    if (shopId == null) return;
 
     try {
       final response = await ApiService().changeActiveStatus(
@@ -290,15 +291,18 @@ class _ManTeamScreenState extends ConsumerState<ManTeamScreen> {
                                   );
                                 },
                                 onSendMessage: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        isOwnAccount
-                                            ? 'This is your own account.'
-                                            : 'Messaging feature for ${emp.name}...',
+                                  if (isOwnAccount) {
+                                    ScaffoldMessenger.of(context).showSnackBar(
+                                      const SnackBar(
+                                        content: Text('This is your own account.'),
                                       ),
-                                    ),
-                                  );
+                                    );
+                                  } else {
+                                    showAssignTaskBottomSheet(
+                                      context,
+                                      preselectedEmpName: emp.name,
+                                    );
+                                  }
                                 },
                               );
                             },

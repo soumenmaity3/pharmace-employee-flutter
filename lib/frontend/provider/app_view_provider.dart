@@ -8,3 +8,4 @@ enum AppView {
 }
 
 final appViewProvider = StateProvider<AppView>((ref) => AppView.splash);
+final selectedNavIndexProvider = StateProvider<int>((ref) => 0);
